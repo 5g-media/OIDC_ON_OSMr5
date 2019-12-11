@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% load get %}
+{% load staticfiles %}
+
+
+
+{% block head_block %}
+    {{ block.super }}
+    <!-- Codemirror core CSS -->
+    <link rel="stylesheet" href="/static/bower_components/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" href="/static/bower_components/codemirror/addon/fold/foldgutter.css" />
+    <link rel="stylesheet" href="/static/bower_components/codemirror/theme/neat.css">
+    <link rel="stylesheet" href="/static/bower_components/codemirror/addon/dialog/dialog.css">
+    <link rel="stylesheet" href="/static/bower_components/codemirror/addon/display/fullscreen.css">
+    <link rel="stylesheet" href="/static/bower_components/select2/dist/css/select2.min.css">
+    <link rel="stylesheet" href="/static/css/lwuitable.css">
+    <link rel="stylesheet" href="/static/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
+{% endblock %}
+{% block title_header_big %}
+    {{ block.super }}
+{% endblock %}
+{% block left_sidebar %}
+    {% include 'osm/osm_project_left_sidebar.html' %}
+{% endblock %}
+
+
+{% block breadcrumb_body %}
+    {{ block.super }}
+    <li><a href="{% url 'instances:list'  type=type %}">{{ type|upper }} Instances</a></li>
+{% endblock %}
+
+{% block content_body %}
+    {{ block.super }}
+    {% include 'modal/instance_create.html' %}
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-12">
+
+            {% if type == 'ns' %}
+                {% include 'instance_list_ns.html' %}
+            {% elif type == 'vnf' %}
+                {% include 'instance_list_vnf.html' %}
+            {% elif type == 'pdu' %}
+                {% include 'instance_list_pdu.html' %}
+            {% elif type == 'nsi' %}
+                {% include 'instance_list_nsi.html' %}
+            {% endif %}
+
+        </div>
+
+    </div>
+    {% include 'modal/instance_create.html' %}
+    {% include 'modal/instance_create_pdu.html' %}
+    {% include 'modal/instance_create_nsi.html' %}
+    {% include 'modal/instance_show.html' %}
+    {% include 'modal/instance_new_action.html' %}
+    {% include 'modal/instance_new_alarm.html' %}
+    {% include 'modal/instance_export_metric.html' %}
+{% endblock %}
+
+{% block resource_block %}
+    {{ block.super }}
+    <!-- Utility JS -->
+    <script src="/static/bower_components/select2/dist/js/select2.js"></script>
+    <script src="/static/bower_components/codemirror/lib/codemirror.js"></script>
+    <script src="/static/bower_components/codemirror/addon/fold/foldcode.js"></script>
+    <script src="/static/bower_components/codemirror/addon/fold/foldgutter.js"></script>
+    <script src="/static/bower_components/codemirror/addon/fold/brace-fold.js"></script>
+    <script src="/static/bower_components/codemirror/mode/javascript/javascript.js"></script>
+    <script src="/static/bower_components/codemirror/addon/search/searchcursor.js"></script>
+    <script src="/static/bower_components/codemirror/addon/search/search.js"></script>
+    <script src="/static/bower_components/codemirror/addon/dialog/dialog.js"></script>
+    <script src="/static/bower_components/codemirror/addon/display/autorefresh.js"></script>
+    <script src="/static/bower_components/codemirror/addon/edit/matchbrackets.js"></script>
+    <script src="/static/bower_components/codemirror/addon/edit/closebrackets.js"></script>
+    <script src="/static/bower_components/codemirror/addon/display/fullscreen.js"></script>
+    <script src="/static/bower_components/codemirror/keymap/sublime.js"></script>
+    <script src="/static/src/instancehandler/instance_list.js"></script>
+    <script src="/static/src/instancehandler/instance_create.js"></script>
+    <script src="/static/bower_components/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/static/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+
+    <script>
+        var table;
+        var instance_type = '{{ type }}';
+        var row_builder = {
+            'ns': [
+                {
+                    "render": function (data, type, row) {
+                        return row["short-name"];
+                    },
+                    "targets": 0
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row["_id"];
+                    },
+                    "targets": 1
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row["nsd-name-ref"];
+                    },
+                    "targets": 2
+                },
+                {
+                 //   "width": "5%",
+                    "render": function (data, type, row) {
+                        if(row["operational-status"] === 'failed')
+                           return '<span class="label label-danger">'+ row["operational-status"] +'</span>';
+                        if(row["operational-status"] === 'init')
+                           return '<span class="label label-warning">'+ row["operational-status"] +'</span>';
+                        if(row["operational-status"] === 'running')
+                           return '<span class="label label-success">'+ row["operational-status"] +'</span>';
+                        return  ''+row["operational-status"]+'';
+                    },
+                    "targets": 3
+                },
+                {
+                //    "width": "5%",
+                    "render": function (data, type, row) {
+                         if(row["config-status"] === 'failed')
+                           return '<span class="label label-danger">'+ row["config-status"] +'</span>';
+                        if(row["config-status"] === 'init')
+                           return '<span class="label label-warning">'+ row["config-status"] +'</span>';
+                        if(row["config-status"] === 'running')
+                           return '<span class="label label-success">'+ row["config-status"] +'</span>';
+                        if(row["config-status"] === 'configured')
+                           return '<span class="label label-success">'+ row["config-status"] +'</span>';
+                        return  ''+row["operational-status"]+'';
+                    },
+                    "targets": 4
+                },
+                {
+                   // "className": "ellipsis",
+                    "render": function (data, type, row) {
+                        return row["detailed-status"];
+                    },
+                    "targets": 5
+                },{
+                     "width": "20%",
+                    "render": function (data, type, row) {
+                          var template = '<div class="btn-group">' +
+                            ' <button type="button" class="btn btn-default"' +
+                            '         onclick="javascript:showInstanceDetails(\''+instance_type+'\', \''+row["_id"]+'\')"' +
+                            '         data-toggle="tooltip" data-placement="top" data-container="body" title="Show Info">' +
+                            '     <i class="fa fa-info"></i>';
+                            if (row["operational-status"] === "running") {
+                                template += ' <button type="button" class="btn btn-default"' +
+                                '         onclick="javascript:showTopology(\'' + instance_type + '\', \'' + row["_id"] + '\')"' +
+                                '         data-toggle="tooltip" data-placement="top" data-container="body" title="Show Graph">' +
+                                '     <i class="fa fa-sitemap"></i>' +
+                                ' </button>';
+                            }else{
+                                template += ' <button type="button" disabled class="btn btn-default"' +
+                                '         onclick="javascript:showTopology(\'' + instance_type + '\', \'' + row["_id"] + '\')"' +
+                                '         data-toggle="tooltip" data-placement="top" data-container="body" title="Show Graph">' +
+                                '     <i class="fa fa-sitemap"></i>' +
+                                ' </button>';
+                            }
+                            template += ' <button type="button" class="btn btn-default"' +
+                            '         onclick="javascript:deleteNs(\''+ row["short-name"] +'\', \''+row["_id"]+'\')"' +
+                            '         data-toggle="tooltip" data-placement="top" data-container="body" title="Delete"><i' +
+                            '         class="far fa-trash-alt"></i></button>' +
+                            ' <button type="button" class="btn btn-default dropdown-toggle"' +
+                            '         data-toggle="dropdown" aria-expanded="false">Actions' +
+                            '     <span class="fa fa-caret-down"></span></button>' +
+                            ' <ul class="dropdown-menu">' +
+                            '     <li><a href="#"' +
+                            '            onclick="javascript:performAction(\''+ row["short-name"] +'\', \''+row["_id"]+'\')">' +
+                            '         <i class="fa fa-magic"></i> Exec NS Primitive</a></li>' +
+                            '     <li>' +
+                            '         <a href="/instances/ns/' +row["_id"] +'/operation">' +
+                            '             <i class="fa fa-list"></i> History of operations</a></li>' +
+                            '     <li class="divider"></li>' +
+                            '     <li><a href="#"' +
+                            '            onclick="javascript:newAlarmNs(\''+ row["short-name"] +'\', \''+row["_id"]+'\')">' +
+                            '         <i class="far fa-bell"></i> New Alarm</a></li>' +
+                            '     <li><a href="#"' +
+                            '            onclick="javascript:exportMetricNs(\''+ row["short-name"] +'\', \''+row["_id"]+ '\')">' +
+                            '         <i class="far fa-chart-bar"></i> Export metric</a></li>' +
+                            '     <li class="divider"></li>' +
+                            '     <li>' +
+                            '         <a href="javascript:deleteNs(\''+ row["short-name"] +'\', \''+row["_id"]+'\', true)">' +
+                            '             <i class="far fa-trash-alt" style="color:red" ></i> Force delete</a></li>' +
+                            ' </ul>' +
+                            '</div>';
+                          return template;
+                    },
+                    "targets": 5,
+                    "orderable": false
+                },
+
+            ],
+            'vnf': [ 
+                {
+                    "render": function (data, type, row) {
+                        return row["_id"];
+                    },
+                    "targets": 0
+                },
+                {
+                    "render": function (data, type, row) {
+                        return '<a href="javascript:openDescriptorView(\'vnfd\', \'' + row["vnfd-id"]+'\')"> ' + row["vnfd-ref"] +' </a>';
+                    },
+                    "targets": 1
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row["member-vnf-index-ref"];
+                    },
+                    "targets": 2
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row["nsr-id-ref"];
+                    },
+                    "targets": 3
+                },
+                {
+                    "render": function (data, type, row) {
+                        return moment.unix(row['created-time']).format('YYYY-MM-DD hh:mm:ss a');
+                    },
+                    "targets": 4
+                }, 
+                {
+                    "render": function (data, type, row) {
+                        return '<div class="btn-group">' +
+                            '     <button type="button" class="btn btn-default"' +
+                            '             onclick="javascript:showInstanceDetails(\''+instance_type+'\', \''+row["_id"]+'\')"' +
+                            '             data-toggle="tooltip" data-placement="top" data-container="body" title="Show Info">' +
+                            '         <i class="fa fa-info"></i>' +
+                            '     </button>' +
+                            ' </div>';
+                    },
+                    "targets": 5,
+                    "orderable": false
+                },
+            ],
+            'pdu': [
+            {
+                    "render": function (data, type, row) {
+                        return row["_id"];
+                    },
+                    "targets": 0
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row["name"];
+                    },
+                    "targets": 1
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row["type"];
+                    },
+                    "targets": 2
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row['_admin']['usageState'];
+                    },
+                    "targets": 3
+                },
+                {
+                    "render": function (data, type, row) {
+                        return moment.unix(row['_admin']['created']).format('YYYY-MM-DD hh:mm:ss a');
+                    },
+                    "targets": 4
+                }, 
+                {
+                    "render": function (data, type, row) {
+                        return '<div class="btn-group">' +
+                            '     <button type="button" class="btn btn-default"' +
+                            '             onclick="javascript:showInstanceDetails(\''+instance_type+'\', \''+row["_id"]+'\')"' +
+                            '             data-toggle="tooltip" data-placement="top" data-container="body" title="Show Info">' +
+                            '         <i class="fa fa-info"></i>' +
+                            '     </button>' +
+                            '<button type="button" class="btn btn-default"' +
+                            '         onclick="javascript:deletePDU(\''+ row["name"] +'\', \''+row["_id"]+'\')"' +
+                            '         data-toggle="tooltip" data-placement="top" data-container="body" title="Delete"><i' +
+                            '         class="far fa-trash-alt"></i></button>'+
+                            ' </div>';
+                    },
+                    "targets": 5,
+                    "orderable": false
+                }
+            ],
+            'nsi': [
+                {
+                    "render": function (data, type, row) {
+                        return row["name"];
+                    },
+                    "targets": 0
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row["_id"];
+                    },
+                    "targets": 1
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row["nst-ref"];
+                    },
+                    "targets": 2
+                },
+                {
+                 //   "width": "5%",
+                    "render": function (data, type, row) {
+                        if(row["operational-status"] === 'failed')
+                           return '<span class="label label-danger">'+ row["operational-status"] +'</span>';
+                        if(row["operational-status"] === 'init')
+                           return '<span class="label label-warning">'+ row["operational-status"] +'</span>';
+                        if(row["operational-status"] === 'running')
+                           return '<span class="label label-success">'+ row["operational-status"] +'</span>';
+                        return  ''+row["operational-status"]+'';
+                    },
+                    "targets": 3
+                },
+                {
+                //    "width": "5%",
+                    "render": function (data, type, row) {
+                         if(row["config-status"] === 'failed')
+                           return '<span class="label label-danger">'+ row["config-status"] +'</span>';
+                        if(row["config-status"] === 'init')
+                           return '<span class="label label-warning">'+ row["config-status"] +'</span>';
+                        if(row["config-status"] === 'running')
+                           return '<span class="label label-success">'+ row["config-status"] +'</span>';
+                        if(row["config-status"] === 'configured')
+                           return '<span class="label label-success">'+ row["config-status"] +'</span>';
+                        return  ''+row["operational-status"]+'';
+                    },
+                    "targets": 4
+                },
+                {
+                   // "className": "ellipsis",
+                    "render": function (data, type, row) {
+                        return row["detailed-status"];
+                    },
+                    "targets": 5
+                },{
+                     "width": "20%",
+                    "render": function (data, type, row) {
+                          var template = '<div class="btn-group">' +
+                            ' <button type="button" class="btn btn-default"' +
+                            '         onclick="javascript:showInstanceDetails(\''+instance_type+'\', \''+row["_id"]+'\')"' +
+                            '         data-toggle="tooltip" data-placement="top" data-container="body" title="Show Info">' +
+                            '     <i class="fa fa-info"></i>';
+                            /* if (row["operational-status"] === "running") {
+                                template += ' <button type="button" class="btn btn-default"' +
+                                '         onclick="javascript:showTopology(\'' + instance_type + '\', \'' + row["_id"] + '\')"' +
+                                '         data-toggle="tooltip" data-placement="top" data-container="body" title="Show Graph">' +
+                                '     <i class="fa fa-sitemap"></i>' +
+                                ' </button>';
+                            }else{
+                                template += ' <button type="button" disabled class="btn btn-default"' +
+                                '         onclick="javascript:showTopology(\'' + instance_type + '\', \'' + row["_id"] + '\')"' +
+                                '         data-toggle="tooltip" data-placement="top" data-container="body" title="Show Graph">' +
+                                '     <i class="fa fa-sitemap"></i>' +
+                                ' </button>';
+                            } */
+                            template += ' <button type="button" class="btn btn-default"' +
+                            '         onclick="javascript:deleteNsi(\''+ row["name"] +'\', \''+row["_id"]+'\')"' +
+                            '         data-toggle="tooltip" data-placement="top" data-container="body" title="Delete"><i' +
+                            '         class="far fa-trash-alt"></i></button>' +
+                            ' <button type="button" class="btn btn-default dropdown-toggle"' +
+                            '         data-toggle="dropdown" aria-expanded="false">Actions' +
+                            '     <span class="fa fa-caret-down"></span></button>' +
+                            ' <ul class="dropdown-menu">' +
+                            '     <li>' +
+                            '         <a href="/instances/nsi/' +row["_id"] +'/operation">' +
+                            '             <i class="fa fa-list"></i> History of operations</a></li>' +
+                            '     <li class="divider"></li>' +
+
+                            '     <li>' +
+                            '         <a href="javascript:deleteNsi(\''+ row["name"] +'\', \''+row["_id"]+'\', true)">' +
+                            '             <i class="far fa-trash-alt" style="color:red" ></i> Force delete</a></li>' +
+                            ' </ul>' +
+                            '</div>';
+                          return template;
+                    },
+                    "targets": 5,
+                    "orderable": false
+                },
+
+            ]
+        };
+        $(document).ready(function () {
+            table = $('#instances_table').DataTable({
+                responsive: true,
+                "ajax": {
+                    "url": "/instances/" + instance_type + "/list/",
+                    "dataSrc": function (json) {
+                        return json.instances;
+                    },
+                    statusCode: {
+                        401: function(){
+                            console.log("no auth");
+                            moveToLogin(window.location.pathname);
+                        }
+                    },
+                    "error": function(hxr, error, thrown){
+                        console.log(error);
+                    }
+
+                },
+                "columns": row_builder[instance_type]
+            });
+
+
+            setInterval(function () {
+                table.ajax.reload();
+            }, 10000);
+
+
+        });
+
+    </script>
+
+{% endblock %}
+
+{% block footer %}
+    {% include "footer.html" %}
+{% endblock %}

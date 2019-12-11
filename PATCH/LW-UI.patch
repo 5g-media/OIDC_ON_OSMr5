@@ -1,0 +1,200 @@
+diff -rc --new-file LW-UI/.bowerrc LW-UI_MODIFIED/.bowerrc
+*** LW-UI/.bowerrc	2019-04-03 22:57:26.000000000 +0200
+--- LW-UI_MODIFIED/.bowerrc	1970-01-01 01:00:00.000000000 +0100
+***************
+*** 1,4 ****
+- {
+-  "directory": "static/bower_components",
+-   "registry": "https://registry.bower.io"
+- }
+--- 0 ----
+diff -rc --new-file LW-UI/authosm/backend.py LW-UI_MODIFIED/authosm/backend.py
+*** LW-UI/authosm/backend.py	2019-04-03 22:57:26.000000000 +0200
+--- LW-UI_MODIFIED/authosm/backend.py	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 18,23 ****
+--- 18,24 ----
+  from .models import OsmUser
+  from lib.osm.osmclient.clientv2 import Client
+  from .exceptions import OSMAuthException
++ from django.conf import settings
+  
+  
+  class OsmBackend(object):
+***************
+*** 39,44 ****
+--- 40,48 ----
+              else:
+  
+                  try:
++                     if settings.OIDC_URL:
++                         username = result['data']['username']
++ 
+                      user = OsmUser.objects.get(username=username)
+                      user.psw = password
+                      user.token = result['data']['id']
+diff -rc --new-file LW-UI/authosm/views.py LW-UI_MODIFIED/authosm/views.py
+*** LW-UI/authosm/views.py	2019-04-03 22:57:26.000000000 +0200
+--- LW-UI_MODIFIED/authosm/views.py	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 17,22 ****
+--- 17,23 ----
+  from django.contrib.auth import login, logout, authenticate
+  from django.http import HttpResponseRedirect
+  import urllib
++ from django.conf import settings
+  
+  
+  # Create your views here.
+***************
+*** 50,53 ****
+                      return HttpResponseRedirect(next_page)
+          else:
+              error_message = 'Login failed!'
+!     return render(request, 'login.html', {'error_message': error_message, 'collapsed_sidebar': False})
+--- 51,56 ----
+                      return HttpResponseRedirect(next_page)
+          else:
+              error_message = 'Login failed!'
+!     #return render(request, 'login.html', {'error_message': error_message, 'collapsed_sidebar': False})
+!     return render(request, 'login.html', {'error_message': error_message, 'collapsed_sidebar': False, 'OIDC_URL': settings.OIDC_URL})
+! 
+diff -rc --new-file LW-UI/docker/Dockerfile LW-UI_MODIFIED/docker/Dockerfile
+*** LW-UI/docker/Dockerfile	2019-04-03 22:57:26.000000000 +0200
+--- LW-UI_MODIFIED/docker/Dockerfile	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 3,8 ****
+--- 3,12 ----
+  WORKDIR /usr/share/osm-lightui
+  COPY . /usr/share/osm-lightui
+  
++ #FIX hash sum error
++ RUN rm -rf /var/lib/apt/lists/partial
++ RUN apt-get update -o Acquire::CompressionTypes::Order::=gz
++ 
+  RUN apt-get update
+  RUN apt-get install -y npm git python-pip nginx supervisor
+  RUN npm install -g bower
+diff -rc --new-file LW-UI/nginx-app.conf LW-UI_MODIFIED/nginx-app.conf
+*** LW-UI/nginx-app.conf	2019-04-03 22:57:26.000000000 +0200
+--- LW-UI_MODIFIED/nginx-app.conf	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 13,18 ****
+--- 13,21 ----
+      location /static/ {
+          alias /usr/share/osm-lightui/static/;
+      }
++     location /static/bower_components/ {
++         alias /usr/share/osm-lightui/bower_components/;
++     }
+  
+      location / {
+          proxy_pass       http://localhost:8000;
+diff -rc --new-file LW-UI/sf_t3d/auth_code_flow.py LW-UI_MODIFIED/sf_t3d/auth_code_flow.py
+*** LW-UI/sf_t3d/auth_code_flow.py	1970-01-01 01:00:00.000000000 +0100
+--- LW-UI_MODIFIED/sf_t3d/auth_code_flow.py	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 0 ****
+--- 1,32 ----
++ from django.shortcuts import redirect
++ from django.contrib.auth import login, authenticate
++ from django.http import HttpResponseRedirect
++ from settings import OIDC_CALLBACK
++ 
++ def access_token(request):
++     
++     code = request.GET.get('code','')
++     print code
++ 
++     try:
++         user = authenticate(username='',
++                             password='',
++                             project_id=None,
++                             code=code,
++                             redirect_url = OIDC_CALLBACK,
++                             grant_type = 'authorization_code')
++     except Exception as e:
++         print e
++         res = HttpResponseRedirect('/auth')
++         res.set_cookie('logout_reason', '', max_age=10)
++         return res
++ 
++     if user and user.is_active:
++         if user.is_authenticated:
++             login(request, user)
++             request.session['projects'] = user.get_projects()
++             
++     response = redirect('projects:open_project')
++     #request.user.is_authenticated.value = True
++     return response
++ 
+diff -rc --new-file LW-UI/sf_t3d/settings.py LW-UI_MODIFIED/sf_t3d/settings.py
+*** LW-UI/sf_t3d/settings.py	2019-04-03 22:57:26.000000000 +0200
+--- LW-UI_MODIFIED/sf_t3d/settings.py	2019-04-03 15:51:53.000000000 +0200
+***************
+*** 42,47 ****
+--- 42,53 ----
+  
+  VERSION = "0.0.1"
+  
++ # Open ID Connect redirect URL for "Authorization Code Flow" + callback URL
++ # See https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth
++ OIDC_URL = 'http://localhost:8080/auth/realms/osm/protocol/openid-connect/auth?response_type=code&scope=openid&client_id=osm1&redirect_uri=http%3A%2F%2F10.20.0.108%2Fcallback'
++ OIDC_CALLBACK= 'http://10.20.0.108/callback'
++ OSM_SERVER = "10.20.0.108"
++ 
+  
+  # Application definition
+  INSTALLED_APPS = [
+diff -rc --new-file LW-UI/sf_t3d/urls.py LW-UI_MODIFIED/sf_t3d/urls.py
+*** LW-UI/sf_t3d/urls.py	2019-04-03 22:57:26.000000000 +0200
+--- LW-UI_MODIFIED/sf_t3d/urls.py	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 17,22 ****
+--- 17,23 ----
+  from django.conf.urls import url, include
+  from authosm import views as user_views
+  from sf_t3d import views
++ from auth_code_flow import access_token
+  
+  app_name = 'base'
+  urlpatterns = [
+***************
+*** 31,35 ****
+--- 32,37 ----
+      url(r'^netslices/', include('netslicehandler.urls', namespace='netslices'), name='netslices_base'),
+      url(r'^admin/users/', include('userhandler.urls', namespace='users'), name='users_base'),
+      url(r'^forbidden', views.forbidden, name='forbidden'),
++     url(r'^callback', access_token)
+  
+  ]
+diff -rc --new-file LW-UI/template/login.html LW-UI_MODIFIED/template/login.html
+*** LW-UI/template/login.html	2019-04-03 22:57:26.000000000 +0200
+--- LW-UI_MODIFIED/template/login.html	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 21,29 ****
+                  <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+              </div>
+              <div class="row">
+!                 <div class="col-xs-8">
+  
+                  </div>
+                  <!-- /.col -->
+                  <div class="col-xs-4">
+                      <button type="submit" class="btn btn-primary btn-block btn-flat">Sign In</button>
+--- 21,35 ----
+                  <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+              </div>
+              <div class="row">
+!                 {%if OIDC_URL != '' %}
+! 
+!                 <div class="col-xs-8" >
+!                     <button type="button" onclick="window.open('{{OIDC_URL}}', '_self')"  class="btn btn-info btn-block btn-flat">OpenID Connect Sign in </button>
+!                 </div>      
+!                 <div class="col-xs-2">
+  
+                  </div>
++                 {% endif %}
+                  <!-- /.col -->
+                  <div class="col-xs-4">
+                      <button type="submit" class="btn btn-primary btn-block btn-flat">Sign In</button>

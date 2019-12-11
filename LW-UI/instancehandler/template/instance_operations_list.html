@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load get %}
+{% load date_tag %}
+{% load staticfiles %}
+
+
+
+{% block head_block %}
+    {{ block.super }}
+    <!-- Codemirror core CSS -->
+    <link rel="stylesheet" href="/static/bower_components/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" href="/static/bower_components/codemirror/addon/fold/foldgutter.css" />
+    <link rel="stylesheet" href="/static/bower_components/codemirror/theme/neat.css">
+    <link rel="stylesheet" href="/static/bower_components/codemirror/addon/dialog/dialog.css">
+    <link rel="stylesheet" href="/static/bower_components/codemirror/addon/display/fullscreen.css">
+    <link rel="stylesheet" href="/static/bower_components/select2/dist/css/select2.min.css">
+        <link rel="stylesheet" href="/static/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
+
+{% endblock %}
+{% block title_header_big %}
+    {{ block.super }}
+{% endblock %}
+{% block left_sidebar %}
+    {% include 'osm/osm_project_left_sidebar.html' %}
+{% endblock %}
+
+
+{% block breadcrumb_body %}
+    {{ block.super }}
+    <li><a href="{% url 'instances:list'  type=type %}">Instances</a></li>
+    <li><a href="#">History of Operations</a></li>
+{% endblock %}
+
+{% block content_body %}
+    {{ block.super }}
+    {% include 'modal/instance_create.html' %}
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-12">
+
+            <div class="box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">History of operations</h3>
+
+                </div>
+                <div class="box-body">
+                    <table id="operations_table" class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Type</th>
+                            <th>Operation State</th>
+                            <th>Start Time</th>
+                            <th>Status Entered Time</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% include 'modal/operation_show.html' %}
+{% endblock %}
+
+{% block resource_block %}
+    {{ block.super }}
+    <!-- Utility JS -->
+    <script src="/static/bower_components/select2/dist/js/select2.js"></script>
+    <script src="/static/bower_components/codemirror/lib/codemirror.js"></script>
+    <script src="/static/bower_components/codemirror/addon/fold/foldcode.js"></script>
+    <script src="/static/bower_components/codemirror/addon/fold/foldgutter.js"></script>
+    <script src="/static/bower_components/codemirror/addon/fold/brace-fold.js"></script>
+    <script src="/static/bower_components/codemirror/mode/javascript/javascript.js"></script>
+    <script src="/static/bower_components/codemirror/addon/search/searchcursor.js"></script>
+    <script src="/static/bower_components/codemirror/addon/search/search.js"></script>
+    <script src="/static/bower_components/codemirror/addon/dialog/dialog.js"></script>
+    <script src="/static/bower_components/codemirror/addon/display/autorefresh.js"></script>
+    <script src="/static/bower_components/codemirror/addon/edit/matchbrackets.js"></script>
+    <script src="/static/bower_components/codemirror/addon/edit/closebrackets.js"></script>
+    <script src="/static/bower_components/codemirror/addon/display/fullscreen.js"></script>
+    <script src="/static/bower_components/codemirror/keymap/sublime.js"></script>
+    <script src="/static/bower_components/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/static/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+    <script src="/static/src/instancehandler/instance_operations_list.js"></script>
+
+    <script>
+    var instance_type = '{{ type }}';
+    var instance_id = '{{ instance_id }}';
+    $(document).ready(function () {
+            var table = $('#operations_table').DataTable({
+                responsive: true,
+                "ajax": {
+                    "url": "/instances/" + instance_type + "/" +instance_id + "/operation",
+                    "dataSrc": function (json) {
+                        return json['operations'];
+                    },
+                    statusCode: {
+                        401: function(){
+                            console.log("no auth");
+                            moveToLogin(window.location.pathname);
+                        }
+                    },
+                    "error": function(hxr, error, thrown){
+                        console.log(error);
+                    }
+
+                },
+                "columns": [
+                    {
+                    "render": function (data, type, row) {
+                        return row["_id"];
+                    },
+                    "targets": 0
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row['lcmOperationType'];
+                    },
+                    "targets": 1
+                },
+                {
+                    "render": function (data, type, row) {
+
+                        if(row["operationState"] === 'FAILED')
+                           return '<span class="label label-danger">'+ row["operationState"] +'</span>';
+                        else if(row["operationState"] === 'PROCESSING')
+                           return '<span class="label label-warning">'+ row["operationState"] +'</span>';
+                        else if(row["operationState"] === 'COMPLETED')
+                           return '<span class="label label-success">'+ row["operationState"] +'</span>';
+                        else
+                         return row["operationState"];
+                    },
+                    "targets": 2
+                },
+                {
+                    "render": function (data, type, row) {
+                        return moment.unix(row['startTime']).format('YYYY-MM-DD hh:mm:ss a')
+                    },
+                    "targets": 3
+                },
+                {
+                    "render": function (data, type, row) {
+                        return moment.unix(row['statusEnteredTime']).format('YYYY-MM-DD hh:mm:ss a')
+                    },
+                    "targets": 4
+                },
+                {
+                    "render": function (data, type, row) {
+                        return '<div class="btn-group">\n' +
+                            '     <button type="button" class="btn btn-default"\n' +
+                            '             onclick="javascript:showOperationDetails(\''+row["nsInstanceId"]+'\', \''+row["_id"]+'\')"\n' +
+                            '             data-toggle="tooltip" data-placement="top" data-container="body" title="Show Info">\n' +
+                            '         <i class="fa fa-info"></i>\n' +
+                            '     </button>\n' +
+                            ' </div>';
+                    },
+                    "targets": 5,
+                    "orderable": false
+                }
+                ],
+                "order": [[ 3, "asc" ]]
+            });
+
+
+            setInterval(function () {
+                table.ajax.reload();
+            }, 10000);
+        });
+
+    </script>
+
+{% endblock %}
+
+{% block footer %}
+    {% include "footer.html" %}
+{% endblock %}

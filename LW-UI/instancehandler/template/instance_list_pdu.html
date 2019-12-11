@@ -1,0 +1,33 @@
+{% load get %}
+{% load date_tag %}
+<div class="box">
+    <div class="box-header with-border">
+        <h3 class="box-title">{{ type|upper }}</h3>
+
+        <div class="box-tools">
+            <button type="button" class="btn btn-default" data-container="body"
+                data-toggle="tooltip" data-placement="top" title="New PDU"
+                onclick="javascript:openModalCreatePDU({ 'project_id':'{{ project_id }}','vim_list_url': '{% url "vims:list"  %}'})">
+            <i class="fa fa-plus"></i> <span> New PDU</span>
+            </button>
+        </div>
+
+    </div>
+    <div class="box-body">
+        <table id="instances_table" class="table table-bordered table-striped responsive" style="width:100%">
+            <thead>
+            <tr>
+                <th>Identifier</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Usage State</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+</div>

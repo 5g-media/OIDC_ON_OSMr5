@@ -1,0 +1,41 @@
+{% load get %}
+<div class="box">
+    <div class="box-header with-border">
+        <h3 class="box-title">Network Slices Instances</h3>
+
+        <div class="box-tools">
+
+            <button type="button" class="btn btn-default" data-container="body"
+                    data-toggle="tooltip" data-placement="top" title="Instantiate NSI"
+                    onclick="javascript:openModalCreateNSI({ 'project_id':'{{ project_id }}','vim_list_url': '{% url "vims:list"  %}', 'nst_list_url': '{% url "netslices:list_templates" %}'})">
+                <i class="fa fa-paper-plane"></i> <span> Create NSI</span></button>
+
+        </div>
+
+    </div>
+    <div class="box-body">
+    {% if alert_error %}
+        <div class="alert alert-danger alert-dismissible fade in">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h4><i class="icon fa fa-ban"></i> Error</h4>
+            {{alert_error}}
+        </div>
+    {% endif %}
+        <table id="instances_table" class="table table-bordered table-striped responsive" style="width:100%">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Identifier</th>
+                <th>Nst name</th>
+                <th style="width:5%">Operational Status</th>
+                <th style="width:5%">Config Status</th>
+                <th>Detailed Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+</div>

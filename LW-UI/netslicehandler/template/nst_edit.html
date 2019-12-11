@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load get %}
+{% load staticfiles %}
+
+
+{% block head_block %}
+{{ block.super }}
+<link rel="stylesheet" href="/static/bower_components/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="/static/bower_components/codemirror/addon/fold/foldgutter.css" />
+<link rel="stylesheet" href="/static/bower_components/codemirror/theme/neat.css">
+<link rel="stylesheet" href="/static/bower_components/codemirror/addon/dialog/dialog.css">
+<link rel="stylesheet" href="/static/bower_components/codemirror/addon/display/fullscreen.css">
+{% endblock %}
+{% block title_header_big %}
+{{ block.super }}
+Network Slices Templates
+{% endblock %}
+{% block left_sidebar %}
+
+{% include 'osm/osm_project_left_sidebar.html' %}
+
+{% endblock %}
+
+
+{% block breadcrumb_body %}
+{{ block.super }}
+<li><a href="{% url "netslices:list_templates" %}">NetSlice Templates</a></li>
+{% endblock %}
+
+{% block content_body %}
+{{ block.super }}
+
+{% csrf_token %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="nav-tabs-custom" style="position: relative;">
+            <ul class="nav nav-tabs" >
+                <li class="active" id="yaml_li"><a href="#yaml" data-toggle="tab"><i class="fa fa-file-code-o"></i> YAML</a></li>
+                <li class="pull-right"><button id="save" type="button" class="btn btn-block btn-primary btn-sm"  onclick="update()" ><i class="fa fa-save"></i> Update</button></li>
+
+            </ul>
+            <div class="alert alert-success" id="success-alert" style="position: absolute; z-index: 100; top: 44px; left: 0; width: 100%;
+            border-radius: 1px;
+            background-color: rgba(0, 166, 90, 0.8) !important;
+            text-align: center;
+            border-color: rgba(0, 141, 76, 0.4);" hidden>
+            <button type="button" class="close" onclick="$('#success-alert').toggle()">x</button>
+            <strong>Success! </strong>
+            Template updated!
+            </div>
+            <div class="tab-content">
+                    <div class="active tab-pane" id="yaml">
+                            <textarea id="code_editor_yaml">
+                            </textarea>
+                        </div>
+            </div>
+        </div>
+        
+        <!-- <div class="box">
+            <div class="box-header with-border">
+                <h3 class="box-title"></h3>
+                <div class="box-tools"></div>
+            </div>
+            <div class="box-body">
+                <textarea id="code_editor_yaml">
+                </textarea>
+            </div>
+        </div> -->
+    </div>
+</div>
+
+{% endblock %}
+
+{% block resource_block %}
+{{ block.super }}
+<script src="/static/bower_components/codemirror/lib/codemirror.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/fold/foldcode.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/fold/foldgutter.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/fold/brace-fold.js" ></script>
+    <script src="/static/bower_components/codemirror/mode/javascript/javascript.js" ></script>
+    <script src="/static/bower_components/codemirror/mode/yaml/yaml.js" ></script>
+    <script src="/static/bower_components/codemirror/mode/markdown/markdown.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/search/searchcursor.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/search/search.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/dialog/dialog.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/display/autorefresh.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/edit/matchbrackets.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/edit/closebrackets.js" ></script>
+    <script src="/static/bower_components/codemirror/addon/display/fullscreen.js" ></script>
+    <script src="/static/bower_components/codemirror/keymap/sublime.js" ></script>
+<script>
+    var csrf_token = '{{csrf_token}}';
+    
+    var table;
+    var yaml_editor_settings = {
+            mode: "yaml",
+            showCursorWhenSelecting: true,
+            autofocus: true,
+            autoRefresh: true,
+            lineNumbers: true,
+            lineWrapping: true,
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            extraKeys: {
+                "F11": function (cm) {
+                    cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                },
+                "Esc": function (cm) {
+                    if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                },
+                "Ctrl-Q": function (cm) {
+                    cm.foldCode(cm.getCursor());
+                }
+            },
+            theme: "neat",
+            keyMap: "sublime"
+        };
+
+    
+        var myYamlTextArea = document.getElementById("code_editor_yaml");
+        var editorYaml = CodeMirror(function (elt) {
+                myYamlTextArea.parentNode.replaceChild(elt, myYamlTextArea);
+            }, yaml_editor_settings);
+
+    var template = {{ template | safe}};
+
+    $(document).ready(function () {
+        
+        editorYaml.setValue(template.data);
+        editorYaml.setSize("auto", "auto");
+       
+    });
+
+    function update() {
+        var dialog = bootbox.dialog({
+            message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>',
+            closeButton: false
+        });
+
+        
+        text = editorYaml.getValue();
+       
+        $.ajax({
+            url: window.location.href,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                'csrfmiddlewaretoken': '{{csrf_token}}',
+                'text': text
+            },
+            success: function (result) {
+                
+                dialog.modal('hide');
+                $("#success-alert").fadeTo(2000, 500).slideDown(500, function(){
+                    setTimeout(function () {
+                        $("#success-alert").slideUp(500);
+                    }, 2000);
+
+                });
+            },
+            error: function (result) {
+                dialog.modal('hide');
+                var data = result.responseJSON;
+                var title = "Error " + (data && data.code ? data.code : 'unknown');
+                var message = data && data.detail ? data.detail : 'No detail available.';
+                bootbox.alert({
+                    title: title,
+                    message: message
+                });
+            }
+        });
+    }
+</script>
+
+{% endblock %}

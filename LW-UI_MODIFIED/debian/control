@@ -1,0 +1,12 @@
+Source: osm-lightui
+Section: devel
+Priority: optional
+Maintainer: Gerardo Garcia <gerardio.garciadeblas@telefonica.com>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.6
+Homepage: http://osm.etsi.org
+
+Package: osm-lightui
+Architecture: all
+Depends: ${misc:Depends}
+Description: Open Source MANO Light UI package ...

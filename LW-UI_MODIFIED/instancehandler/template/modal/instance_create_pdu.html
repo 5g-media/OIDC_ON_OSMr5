@@ -1,0 +1,87 @@
+<div class="modal" id="modal_new_pdu" xmlns="http://www.w3.org/1999/html">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span></button>
+                <h4 class="modal-title">New PDU</h4>
+            </div>
+            <form id="formCreatePDU" action='{% url "instances:create" type='pdu' %}'
+                  class="form-horizontal"
+                  method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body" id="modal_new_pdu_body">
+                        <div id="pdu_base_div">
+
+                                <div class="form-group">
+        
+                                    <label for="pdu_name" class="col-sm-2">Name *</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" id="pdu_name" name="name" placeholder="Name" required>
+                                    </div>
+        
+                                    <label for="pdu_type" class="col-sm-2">PDU type *</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" id="pdu_type" name="pdu_type" placeholder="Type" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pdu_vim_accounts" class="col-sm-2">Vim Accounts *</label>
+                                    <div class="col-sm-6">
+                                            <select required id="pdu_vim_accounts" class="js-example-basic-multiple form-control" name="pdu_vim_accounts"
+                                            multiple="multiple">
+                                            </select>
+                                    </div>
+                                </div>
+        
+                            </div>
+                            <div class="row">
+                                    <h4 class="col-sm-4">Interfaces:</h4>
+                                </div>
+                            <div id="interfaces_div">
+                                
+                                <div class="interface-group">
+                                    <button type="button" class="btn btn-success btn-add btn-sm pull-right">+</button>
+                                    <div class="form-group">
+                                        <label for="interfaces_name" class="col-sm-2">Name</label>
+                                        <div class="col-sm-3">
+                                            <input name="interfaces_name" class="form-control input-sm" required>
+                                        </div>
+                                        <label for="interfaces_name" class="col-sm-2">IP</label>
+                                        <div class="col-sm-3">
+                                            <input name="interfaces_ip" class="form-control input-sm" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="interfaces_mgmt" class="col-sm-2">Mgmt</label>
+                                        <div class="col-sm-3">
+                                                <select name="interfaces_mgmt" id="interfaces_mgmt" class="form-control">
+                                                    <option value="false">False</option>
+                                                    <option value="true">True</option>
+                                                </select>
+                                        </div>
+                                        <label for="interfaces_vimnetname" class="col-sm-2">Net name</label>
+                                        <div class="col-sm-3">
+                                            <input id="interfaces_vimnetname" name="interfaces_vimnetname" class="form-control input-sm" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary"
+                            data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Creating..."
+                            id="create_new_pdu">Create
+                    </button>
+
+                </div>
+            </form>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+
+
+

@@ -1,0 +1,234 @@
+line {
+  stroke: rgb(212, 212, 212);
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+
+.node_path {
+    opacity: 1;
+    stroke: #2F3550;
+    stroke-width: 1;
+}
+
+.node_selected {
+    opacity: 1 !important;
+    stroke: #2F3550 !important;
+    stroke-width: 3 !important;
+}
+
+.node_text {
+    font-family: Lucida Console;
+    text-anchor: middle;
+    user-select: none;
+}
+
+.hidden_circle {
+    opacity: 0;
+    stroke: #FF0000 !important;
+    stroke-width: 2 !important;
+}
+
+.hidden_circle:hover {
+    opacity: 1;
+    stroke: #FF0000 !important;
+    stroke-width: 2;
+}
+
+.node_path:hover {
+    opacity: 1;
+    stroke: #2F3550;
+    stroke-width: 3;
+}
+
+.node_path:hover text {
+    opacity: 0.4;
+
+}
+
+.link {
+    fill: none;
+}
+
+.link path {
+    stroke-width: 2;
+    stroke: lightgray;
+}
+
+.matted {
+    opacity: 0.3;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.left-tool-bar-monitoring {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+    text-align: center;
+    font-size: 12px;
+
+    cursor: default;
+    padding: 0 6px;
+    line-height: 22px;
+    position: absolute;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.container-fluid {
+    min-height: 100vh !important;
+    background-color: white;
+}
+
+#main {
+    height: 100%;
+    display: flex;
+}
+
+#graph_editor_container {
+    position: relative;
+    min-height: 100vh;
+
+
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#legenda {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    border: 1px solid #cdcdcd;
+    border-radius: 2px;
+    padding: 15px;
+}
+
+#legenda > .node {
+    margin-top: 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+}
+
+#legenda > .node:first-child {
+    margin-top: 0;
+}
+
+#legenda > .node > .icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 1px;
+    margin-right: 10px;
+}
+
+#leftside {
+    border-right: 1px solid #AFAFAF;
+    flex: 0 0 auto;
+    max-width: 300px;
+    min-width: 150px;
+    padding: 20px 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+#palette > .node {
+    margin-top: 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    cursor: move;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-color: whitesmoke;
+}
+
+#palette > .node:first-child {
+    margin-top: 0;
+}
+
+#palette > .node > .icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 1px;
+    margin-right: 10px;
+}
+
+[draggable=true] {
+    -khtml-user-drag: element;
+    -webkit-user-drag: element;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+}
+#graph_svg {
+    max-width: 100%;
+    width: 100%;
+}
+#side {
+    border-left: 1px solid #AFAFAF;
+    flex: 0 0 auto;
+    max-width: 500px;
+    min-width: 300px;
+    padding: 20px 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.section {
+    font-size: 16px;
+    line-height: 40px;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.section > .status {
+    display: flex;
+    align-items: center;
+    font-size: 12px
+}
+
+.section > .status > .indicator {
+    width: 8px;
+    height: 8px;
+    background-color: red;
+    border-radius: 50%;
+    display: block;
+    margin-right: 7px;
+}
+
+.section > .status.active > .indicator {
+    background-color: green;
+}
+
+.children td {
+    padding: 5px 7px;
+    font-size: 13px;
+    line-height: 15px;
+}
+
+.children td:first-child {
+    padding-left: 0;
+    font-weight: 500;
+    text-align: right
+}
+
+.left-tool-bar-monitoring > .btn-default {
+    background-color: transparent!important;
+}

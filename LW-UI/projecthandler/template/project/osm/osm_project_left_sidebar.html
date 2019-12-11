@@ -1,0 +1,119 @@
+<aside class="main-sidebar">
+    <!-- sidebar: style can be found in sidebar.less -->
+    <section class="sidebar">
+        <!-- sidebar menu: : style can be found in sidebar.less -->
+        <ul class="sidebar-menu" data-widget="tree">
+            <li class="header">MAIN NAVIGATION</li>
+            {% url "home" as  home_url %}
+            <li {% if request.get_full_path == home_url %} class="active" {% endif %} ><a href='{% url "home" %}'><i
+                    class="fa fa-home fa-fw"></i> <span>Home</span></a></li>
+            <li class="header">PROJECT</li>
+            {% url "projects:open_project"  as  project_url %}
+            <li {% if request.get_full_path == project_url %} class="active" {% endif %} >
+                <a href='{% url "projects:open_project" %}'>
+                    <i class="fa fa-file-text fa-fw"></i> <span>Overview</span>
+                </a>
+            </li>
+            {% url "packages:list_packages"   package_type="ns" as  nsd_list_url %}
+            {% url "packages:list_packages"   package_type='vnf' as  vnfd_list_url %}
+            <li {% if request.get_full_path == nsd_list_url or  request.get_full_path == vnfd_list_url %}
+                class="active treeview menu-open" {% else %} class="treeview  menu-open" {% endif %} >
+                <a href="#">
+                    <i class="fa fa-archive fa-fw"></i> <span>Packages {{ nsd_list }}</span>
+                    <span class="pull-right-container">
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </span>
+                </a>
+                <ul class="treeview-menu" style="display: block;">
+                    <li {% if request.get_full_path == nsd_list_url %} class="active" {% endif %}>
+                        <a href='{{ nsd_list_url }}'>
+                            <i class="fa fa-archive fa-fw"></i> <span>NS Packages</span>
+                        </a>
+                    </li>
+                    <li {% if request.get_full_path == vnfd_list_url %} class="active" {% endif %}>
+                        <a href='{{ vnfd_list_url }}'>
+                            <i class="fa fa-archive fa-fw"></i> <span>VNF Packages</span>
+                        </a>
+                    </li>
+
+                </ul>
+            </li>
+            {% url "netslices:list_templates"   as netslices_temaplates %}
+            <li {% if request.get_full_path == netslices_temaplates %} class="active" {% endif %}>
+                <a href='{% url "netslices:list_templates"   %}'>
+                    <i class="fas fa-layer-group fa-fw""></i> <span>NetSlice Templates</span>
+                </a>
+            </li>
+            {% url "instances:list"  type='ns' as  instance_ns_list_url %}
+            {% url "instances:list"  type='vnf' as  instance_vnf_list_url %}
+            {% url "instances:list"  type='pdu' as  instance_pdu_list_url %}
+            {% url "instances:list"  type='nsi' as  instance_nsi_list_url %}
+            <li {% if request.get_full_path == instance_ns_list_url or  request.get_full_path == instance_vnf_list_url or request.get_full_path == instance_pdu_list_url or request.get_full_path == instance_nsi_list_url %}
+                class="active treeview menu-open" {% else %} class="treeview  menu-open" {% endif %} >
+                <a href="#">
+                    <i class="fa fa-paper-plane fa-fw"></i> <span>Instances</span>
+                    <span class="pull-right-container">
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </span>
+                </a>
+                <ul class="treeview-menu" style="display: block;">
+                    {% url "instances:list"  type='ns' as  instance_ns_list_url %}
+                    <li {% if request.get_full_path == instance_ns_list_url %} class="active" {% endif %} >
+                        <a href='{% url "instances:list"   type="ns" %}'>
+                            <i class="fa fa-sitemap fa-fw"></i> <span>NS Instances</span>
+                        </a>
+
+                    </li>
+                    {% url "instances:list"  type='vnf' as  instance_vnf_list_url %}
+                    <li {% if request.get_full_path == instance_vnf_list_url %} class="active" {% endif %} >
+                        <a href='{% url "instances:list"   type="vnf" %}'>
+                            <i class="far fa-hdd fa-fw"></i> <span>VNF Instances</span>
+                        </a>
+                    </li>
+                    {% url "instances:list"  type='pdu' as  instance_pdu_list_url %}
+                    <li {% if request.get_full_path == instance_pdu_list_url %} class="active" {% endif %} >
+                        <a href='{% url "instances:list"   type="pdu" %}'>
+                            <i class="far fa-hdd fa-fw"></i> <span>PDU Instances</span>
+                        </a>
+                    </li>
+                    {% url "instances:list"  type='nsi' as  instance_nsi_list_url %}
+                    <li {% if request.get_full_path == instance_nsi_list_url %} class="active" {% endif %} >
+                        <a href='{% url "instances:list"   type="nsi" %}'>
+                            <i class="fas fa-layer-group fa-fw"></i> <span>NetSlice Instances</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            {% url "sdns:list"   as sdn_list_url %}
+            <li {% if request.get_full_path == sdn_list_url %} class="active" {% endif %}>
+                <a href='{% url "sdns:list"   %}'>
+                    <i class="fas fa-globe fa-fw"></i> <span>SDN Controllers</span>
+                </a>
+            </li>
+
+            {% url "vims:list"   as  vim_list_url %}
+            <li {% if request.get_full_path == vim_list_url %} class="active" {% endif %}>
+                <a href='{% url "vims:list"   %}'>
+                    <i class="fa fa-server fa-fw"></i> <span>VIM Accounts</span>
+                </a>
+            </li>
+            {% if user.is_admin %}
+                <li class="header">ADMIN</li>
+                {% url "users:list"   as  user_list_url %}
+                <li {% if request.get_full_path == user_list_url %} class="active" {% endif %}>
+                <a href='{% url "users:list"   %}'>
+                    <i class="fas fa-users"></i> <span>Users</span>
+                </a>
+                </li>
+                {% url "projects:projects_list"   as  proj_list_url %}
+                <li {% if request.get_full_path == proj_list_url %} class="active" {% endif %}>
+                <a href='{% url "projects:projects_list"   %}'>
+                    <i class="fas fa-folder"></i> <span>Projects</span>
+                </a>
+                </li>
+            {% endif %}
+        </ul>
+    </section>
+    <!-- /.sidebar -->
+</aside>

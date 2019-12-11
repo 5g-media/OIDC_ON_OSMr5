@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load get %}
+{% load staticfiles %}
+
+
+{% block head_block %}
+{{ block.super }}
+<link rel="stylesheet" href="/static/bower_components/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="/static/bower_components/codemirror/addon/fold/foldgutter.css" />
+<link rel="stylesheet" href="/static/bower_components/codemirror/theme/neat.css">
+<link rel="stylesheet" href="/static/bower_components/codemirror/addon/dialog/dialog.css">
+<link rel="stylesheet" href="/static/bower_components/codemirror/addon/display/fullscreen.css">
+<link rel="stylesheet" href="/static/bower_components/select2/dist/css/select2.min.css">
+<link rel="stylesheet" href="/static/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
+{% endblock %}
+{% block title_header_big %}
+{{ block.super }}
+Network Slices Templates
+{% endblock %}
+{% block left_sidebar %}
+
+{% include 'osm/osm_project_left_sidebar.html' %}
+
+{% endblock %}
+
+
+{% block breadcrumb_body %}
+{{ block.super }}
+<li><a href="{% url "netslices:list_templates" %}">NetSlice Templates</a></li>
+{% endblock %}
+
+{% block content_body %}
+{{ block.super }}
+{% include 'modal/nst_details.html' %}
+{% include 'modal/instance_create_nsi.html' %}
+{% csrf_token %}
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box">
+            <div class="box-header with-border">
+                <h3 class="box-title"></h3>
+                <div class="box-tools"></div>
+            </div>
+            <div class="box-body">
+                <table id="templates_table" class="table table-bordered table-striped dataTable" role="grid">
+                    <thead>
+                        <tr role="row">
+                            <th>Name</th>
+                            <th>Identifier</th>
+                            <th>Usage State</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <div class="box box-solid">
+            <div class="box-body">
+
+                <div class="upload-drop-zone" id="drop-zone">
+                    <i class="fa fa-upload"></i> Just drag and drop files here
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block resource_block %}
+{{ block.super }}
+<script src="/static/bower_components/select2/dist/js/select2.js"></script>
+<script src="/static/bower_components/codemirror/lib/codemirror.js"></script>
+<script src="/static/bower_components/codemirror/addon/fold/foldcode.js"></script>
+<script src="/static/bower_components/codemirror/addon/fold/foldgutter.js"></script>
+<script src="/static/bower_components/codemirror/addon/fold/brace-fold.js"></script>
+<script src="/static/bower_components/codemirror/mode/javascript/javascript.js"></script>
+<script src="/static/bower_components/codemirror/addon/search/searchcursor.js"></script>
+<script src="/static/bower_components/codemirror/addon/search/search.js"></script>
+<script src="/static/bower_components/codemirror/addon/dialog/dialog.js"></script>
+<script src="/static/bower_components/codemirror/addon/display/autorefresh.js"></script>
+<script src="/static/bower_components/codemirror/addon/edit/matchbrackets.js"></script>
+<script src="/static/bower_components/codemirror/addon/edit/closebrackets.js"></script>
+<script src="/static/bower_components/codemirror/addon/display/fullscreen.js"></script>
+<script src="/static/bower_components/codemirror/keymap/sublime.js"></script>
+<script src="/static/bower_components/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="/static/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+<script src="/static/src/drop_zone.js"></script>
+<script src="/static/src/netslicehandler/onboard_template.js"></script>
+<script src="/static/src/netslicehandler/templates_list.js"></script>
+<script src="/static/src/instancehandler/instance_create.js"></script>
+<script>
+    var csrf_token = '{{csrf_token}}';
+    var table;
+
+    var editorJSON;
+
+
+
+    $(document).ready(function () {
+        table = $('#templates_table').DataTable({
+            responsive: true,
+            "ajax": {
+                "url": "netslices/templates/list",
+                "dataSrc": function (json) {
+                    return json['templates'];
+                },
+                statusCode: {
+                    401: function () {
+                        console.log("no auth");
+                        moveToLogin(window.location.pathname);
+                    }
+                },
+                "error": function (hxr, error, thrown) {
+                    console.log(hxr)
+                    console.log(thrown)
+                    console.log(error);
+                }
+
+            },
+            "columns": [
+                {
+                    "render": function (data, type, row) {
+                        return row['name'] || '';
+                    },
+                    "targets": 0
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row['_id'];
+                    },
+                    "targets": 1
+                },
+                {
+                    "render": function (data, type, row) {
+                        return row['_admin']['usageState'];
+                    },
+                    "targets": 2
+                },
+                {
+                    "render": function (data, type, row) {
+                        return '<div class="btn-group">' +
+                            '   <button type="button" class="btn btn-default" data-container="body"\n' +
+                               'data-toggle="tooltip" data-placement="top" title="Instantiate NS"\n' +
+                               'onclick="javascript:openModalCreateNSI({\'template_name\':\''+row["name"]+'\', \'template_id\':\''+row["_id"]+'\', \'project_id\':\'{{ project_id }}\',\'vim_list_url\': \'{% url "vims:list"  %}\', \'nst_list_url\': \'{% url "netslices:list_templates" %}\'})">\n' +
+                               '<i class="fa fa-paper-plane"></i></button>\n'+
+                            '     <button type="button" class="btn btn-default"' +
+                            '             onclick="javascript:showNstDetails(\'' + row["_id"] + '\')"' +
+                            '             data-toggle="tooltip" data-placement="top" data-container="body" title="Open">' +
+                            '         <i class="fa fa-info"></i>' +
+                            '     </button>' +
+                            '     <button type="button" class="btn btn-default"' +
+                            '             onclick="window.location.href=\'/netslices/templates/'+row["_id"]+'/edit\'"' +
+                            '             data-toggle="tooltip" data-placement="top" data-container="body" title="Edit">' +
+                            '         <i class="fa fa-edit"></i>' +
+                            '     </button>' +
+                            '<button type="button" class="btn btn-default"' +
+                            '         onclick="javascript:deleteTemplate(\'' + row["name"] + '\', \'' + row["_id"] + '\')"' +
+                            '         data-toggle="tooltip" data-placement="top" data-container="body" title="Delete"><i' +
+                            '         class="far fa-trash-alt"></i></button>' +
+                            ' </div>';
+                    },
+                    "targets": 3,
+                    "orderable": false
+                }
+            ]
+        });
+
+        setInterval(function () {
+            refreshTable();
+        }, 10000);
+
+        var json_editor_settings = {
+            mode: "javascript",
+            showCursorWhenSelecting: true,
+            autofocus: true,
+            lineNumbers: true,
+            lineWrapping: true,
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            extraKeys: {
+                "F11": function (cm) {
+                    cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                },
+                "Esc": function (cm) {
+                    if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                },
+                "Ctrl-Q": function (cm) {
+                    cm.foldCode(cm.getCursor());
+                }
+            },
+            theme: "neat",
+            keyMap: "sublime"
+        };
+        var myJsonTextArea = document.getElementById("nst_view_json");
+        editorJSON = CodeMirror(function (elt) {
+            myJsonTextArea.parentNode.replaceChild(elt, myJsonTextArea);
+        }, json_editor_settings);
+    });
+
+    function refreshTable() {
+        table.ajax.reload();
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "project_details.html" %}
+{% load date_tag %}
+{% block head_base %}
+    {{ block.super }}
+{% endblock %}
+
+{% block body %}
+        {{ block.super }}
+{% endblock %}
+{% block logo_sidebar %}
+        {{ block.super }}
+{% endblock %}
+
+{% block left_sidebar %}
+    {% include 'osm/osm_project_left_sidebar.html' %}
+{% endblock %}
+
+{% block content_body %}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="box box-widget">
+            <div class="box-footer no-padding">
+                <ul class="nav nav-stacked">
+                    <li><a><b>Project Name:</b> <span
+                        class="pull-right">{{project_overview.name}}</span></a>
+                    </li>
+                    <li><a><b>Created:</b> <span
+                            class="pull-right">{{project_overview.created_date|get_date}}</span></a></li>
+                    <li><a><b>Modified:</b> <span
+                        class="pull-right">{{project_overview.updated_date|get_date}}</span></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-6 ">
+                <div class="small-box bg-aqua">
+                    <div class="inner"><h3>{{ project_overview.nsd }}</h3>
+                        <p>NS packages</p></div>
+                    <div class="icon"><i class="fa fa-archive"></i></div>
+                    <a href='{% url "packages:list_packages"   package_type="ns" %}' class="small-box-footer">Open list <i
+                            class="fa fa-arrow-circle-right"></i></a></div>
+            </div>
+            <div class="col-md-6 ">
+                <div class="small-box bg-aqua">
+                    <div class="inner"><h3>{{ project_overview.vnfd }}</h3>
+                        <p>VNF packages</p></div>
+                    <div class="icon"><i class="fa fa-archive"></i></div>
+                    <a href='{% url "packages:list_packages"   package_type="vnf" %}' class="small-box-footer">Open list <i
+                            class="fa fa-arrow-circle-right"></i></a></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 ">
+                <div class="small-box bg-maroon">
+                    <div class="inner"><h3>{{ project_overview.ns }}</h3>
+                        <p>NS Instances</p></div>
+                    <div class="icon"><i class="fa fa-sitemap fa-fw"></i></div>
+                    <a href='{% url "instances:list"  type="ns"  %}' class="small-box-footer">Open list <i
+                            class="fa fa-arrow-circle-right"></i></a></div>
+            </div>
+
+            <div class="col-md-6 ">
+                <div class="small-box bg-maroon">
+                    <div class="inner"><h3>{{ project_overview.vnf }}</h3>
+                        <p>VNF Instances</p></div>
+                    <div class="icon"><i class="far fa-hdd fa-fw"></i></div>
+                    <a href='{% url "instances:list"  type="vnf"  %}' class="small-box-footer">Open list <i
+                            class="fa fa-arrow-circle-right"></i></a></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block footer %}
+    {% include "footer.html" %}
+{% endblock %}

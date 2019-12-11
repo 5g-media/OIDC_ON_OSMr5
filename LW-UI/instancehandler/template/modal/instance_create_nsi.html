@@ -1,0 +1,71 @@
+<div class="modal" id="modal_new_nsi" xmlns="http://www.w3.org/1999/html">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span></button>
+                <h4 class="modal-title">New NSI</h4>
+            </div>
+            <form id="formCreateNS" action='{% url "instances:create" type='nsi' %}'
+                  class="form-horizontal"
+                  method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body" id="modal_new_instance_body">
+                    <div class="form-group">
+                        <label for="nsiName" class="col-sm-3 control-label">Name *</label>
+                        <div class="col-sm-6">
+                            <input class="form-control" id="nsiName" name="nsiName"
+                                   placeholder="Ns name" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nsiDescription" class="col-sm-3 control-label">Description *</label>
+                        <div class="col-sm-6">
+                            <input class="form-control" id="nsiDescription" name="nsiDescription"
+                                   placeholder="Description" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nstId" class="col-sm-3 control-label">Nst Id *</label>
+                        <div class="col-sm-6">
+                            <select required id="nstId" class="js-example-basic form-control" name="nstId">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="vimAccountIdNSI" class="col-sm-3 control-label">Vim Account Id *</label>
+                        <div class="col-sm-6">
+                            <select required id="vimAccountIdNSI" class="js-example-basic form-control" name="vimAccountId">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh_key_nsi" class="col-sm-3 control-label">SSH Key </label>
+                        <div class="col-sm-6">
+                            <textarea class="form-control" id="ssh_key_nsi" name="ssh_key"
+                                      placeholder="Paste your key here..." rows="4"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="config_nsi" class="col-sm-3 control-label">Config </label>
+                        <div class="col-sm-6">
+                            <textarea class="form-control" id="config_nsi" name="config" placeholder="Yaml config"
+                                      rows="4"></textarea>
+                        </div>
+                    </div> 
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary"
+                            data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Creating..."
+                            id="create_new_instance_nsi">Create
+                    </button>
+
+                </div>
+            </form>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>

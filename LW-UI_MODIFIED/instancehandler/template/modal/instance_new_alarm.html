@@ -1,0 +1,83 @@
+<div class="modal" id="modal_instance_new_alarm" xmlns="http://www.w3.org/1999/html">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span></button>
+                <h4 class="modal-title">Create Alarm</h4>
+            </div>
+
+            <form id="formAlarmNS" action="" class="form-horizontal" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body" id="modal_instance_new_alarm_body">
+
+
+                    <div class="form-group">
+                        <label for="alarm_name" class="col-sm-3">Name *</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="alarm_name" name="alarm_name" required>
+                        </div>
+                        <label for="metric_name" class="col-sm-3">Metric Name *</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="metric_name" name="metric_name" required>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="vnf_member_index" class="col-sm-3">VNF Member index *</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="vnf_member_index" name="vnf_member_index" required>
+                        </div>
+                        <label for="vdu_name" class="col-sm-3">VDU Name *</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="vdu_name" name="vdu_name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="statistic" class="col-sm-3">Statistic *</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="statistic" name="statistic" required>
+                        </div>
+                        <label for="correlation_id" class="col-sm-3">Correlation</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="correlation_id" name="correlation_id" >
+                        </div>
+
+                    </div>
+                    <div class="form-group">
+                        <label for="threshold_value" class="col-sm-3">Threshold Value *</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="threshold_value" name="threshold_value" required>
+                        </div>
+                        <label for="statistic" class="col-sm-3">Severity</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="severity" name="severity" >
+                        </div>
+
+                    </div>
+                    <div class="form-group">
+                        <label for="operation" class="col-sm-3">Operation</label>
+                        <div class="col-sm-3">
+                            <input class="form-control input-sm" id="operation" name="operation" >
+                        </div>
+
+
+
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary pull-right">Create</button>
+                </div>
+            </form>
+
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>

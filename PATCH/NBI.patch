@@ -1,0 +1,319 @@
+diff -rc --new-file NBI/Dockerfile.local NBI_MODIFIED/Dockerfile.local
+*** NBI/Dockerfile.local	2019-04-03 22:57:25.000000000 +0200
+--- NBI_MODIFIED/Dockerfile.local	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 15,27 ****
+  
+  FROM ubuntu:16.04
+  
+  # Set the working directory to /app
+  WORKDIR /app/NBI/osm_nbi
+  
+  RUN apt-get update && apt-get install -y git python3 python3-jsonschema \
+      python3-pymongo python3-yaml python3-pip python3-keystoneclient \
+      && pip3 install pip==9.0.3 \
+!     && pip3 install aiokafka cherrypy==18.0.0 keystoneauth1 \
+      && mkdir -p /app/storage/kafka && mkdir -p /app/log 
+  
+  # OSM_COMMON
+--- 15,31 ----
+  
+  FROM ubuntu:16.04
+  
++ #FIX hash sum error
++ RUN rm -rf /var/lib/apt/lists/*
++ RUN apt-get update -o Acquire::CompressionTypes::Order::=gz
++ 
+  # Set the working directory to /app
+  WORKDIR /app/NBI/osm_nbi
+  
+  RUN apt-get update && apt-get install -y git python3 python3-jsonschema \
+      python3-pymongo python3-yaml python3-pip python3-keystoneclient \
+      && pip3 install pip==9.0.3 \
+!     && pip3 install aiokafka cherrypy==18.0.0 keystoneauth1 PyJWT cryptography \
+      && mkdir -p /app/storage/kafka && mkdir -p /app/log 
+  
+  # OSM_COMMON
+***************
+*** 78,84 ****
+  ENV OSMNBI_MESSAGE_HOST                         kafka
+  ENV OSMNBI_MESSAGE_PORT                         9092
+  # authentication
+! ENV OSMNBI_AUTHENTICATION_BACKEND               internal
+  #ENV OSMNBI_AUTHENTICATION_BACKEND               keystone
+  #ENV OSMNBI_AUTHENTICATION_AUTH_URL              keystone
+  #ENV OSMNBI_AUTHENTICATION_AUTH_PORT             5000
+--- 82,89 ----
+  ENV OSMNBI_MESSAGE_HOST                         kafka
+  ENV OSMNBI_MESSAGE_PORT                         9092
+  # authentication
+! #ENV OSMNBI_AUTHENTICATION_BACKEND               internal
+! ENV OSMNBI_AUTHENTICATION_BACKEND                oidc
+  #ENV OSMNBI_AUTHENTICATION_BACKEND               keystone
+  #ENV OSMNBI_AUTHENTICATION_AUTH_URL              keystone
+  #ENV OSMNBI_AUTHENTICATION_AUTH_PORT             5000
+diff -rc --new-file NBI/osm_nbi/auth.py NBI_MODIFIED/osm_nbi/auth.py
+*** NBI/osm_nbi/auth.py	2019-04-03 22:57:25.000000000 +0200
+--- NBI_MODIFIED/osm_nbi/auth.py	2019-04-03 22:57:13.000000000 +0200
+***************
+*** 35,44 ****
+--- 35,55 ----
+  
+  from authconn import AuthException
+  from authconn_keystone import AuthconnKeystone
++ from authconn_oidc import AuthconnOIDC
+  from osm_common import dbmongo
+  from osm_common import dbmemory
+  from osm_common.dbbase import DbException
+  
++ # OIDC
++ import jwt
++ from time import time
++ import requests
++ import jwt
++ import urllib.request
++ import json
++ import base64
++ import logging
++ from http import HTTPStatus
+  
+  class Authenticator:
+      """
+***************
+*** 87,92 ****
+--- 98,105 ----
+              if not self.backend:
+                  if config["authentication"]["backend"] == "keystone":
+                      self.backend = AuthconnKeystone(self.config["authentication"])
++                 if config["authentication"]["backend"] == "oidc":
++                     self.backend = AuthconnOIDC(self.config["authentication"])    
+                  elif config["authentication"]["backend"] == "internal":
+                      self._internal_tokens_prune()
+                  else:
+***************
+*** 144,149 ****
+--- 157,164 ----
+                      cherrypy.session['Authorization'] = token
+              if self.config["authentication"]["backend"] == "internal":
+                  return self._internal_authorize(token)
++             elif self.config["authentication"]["backend"] == "oidc":
++                 return self.authorize_OIDC(token, cherrypy.request.remote)
+              else:
+                  try:
+                      self.backend.validate_token(token)
+***************
+*** 161,166 ****
+--- 176,183 ----
+      def new_token(self, session, indata, remote):
+          if self.config["authentication"]["backend"] == "internal":
+              return self._internal_new_token(session, indata, remote)
++         elif self.config["authentication"]["backend"] == "oidc":
++             return self.new_token_OIDC(indata, remote)
+          else:
+              if indata.get("username"):
+                  token, projects = self.backend.authenticate_with_user_password(
+***************
+*** 355,357 ****
+--- 372,497 ----
+              self.db.del_list("tokens", {"expires.lt": now})
+              self.next_db_prune_time = self.periodin_db_pruning + now
+              self.tokens_cache.clear()   # force to reload tokens from database
++             
++  #  OIDC
++     def decode_token_OIDC(self, token):
++         if not token:
++             raise AuthException("Needed a token or Authorization http header", http_code=HTTPStatus.UNAUTHORIZED)
++         
++         oidc_resource = self.config["authentication"]["oidc_resource"]
++         oidc_well_known_url = self.config["authentication"]["oidc_well_known_url"]
++         response = urllib.request.urlopen(oidc_well_known_url)
++         oidc_well_known_json = json.loads(urllib.request.urlopen(oidc_well_known_url).read().decode('utf-8'))
++         oidc_jwks_uri = oidc_well_known_json["jwks_uri"]
++         oidc_key_json = json.loads(urllib.request.urlopen(oidc_jwks_uri).read().decode('utf-8'))
++         key_json = json.dumps(oidc_key_json["keys"][0])
++ 
++         public_key = jwt.algorithms.RSAAlgorithm.from_jwk(key_json)
++         decoded = jwt.decode(token, public_key, algorithms='RS256', audience=oidc_resource)
++ 
++         localuser = decoded.get("resource_access").get(oidc_resource).get("roles")[0]
++         self.logger.info("localuser: " + localuser)
++         return localuser
++     
++     def authorize_OIDC(self, access_token, remote):
++         user = self.decode_token_OIDC(access_token)
++ 
++         now = time()
++         user_content = None                          
++         
++         if user:
++             user_rows = self.db.get_list("users", {"username": user})
++             user_content = None
++             if user_rows:
++                 user_content = user_rows[0]
++                 if access_token == None:
++                     user_content = None
++             if not user_content:
++                 raise AuthException("Invalid username/password", http_code=HTTPStatus.UNAUTHORIZED)
++         else:
++             raise AuthException("Provide credentials: username/password or Authorization Bearer token",
++                                 http_code=HTTPStatus.UNAUTHORIZED)
++ 
++         token_id = str(access_token)
++         project_id = user_content["projects"][0]
++         
++         if project_id == "admin":
++             session_admin = True
++         else:
++             project = self.db.get_one("projects", {"_id": project_id})
++             session_admin = project.get("admin", False)
++         new_session = {"issued_at": now, "expires": now + 3600,
++                     "_id": token_id, "id": token_id, "project_id": project_id, "username": user_content["username"],
++                     "remote_port": remote.port, "admin": session_admin}
++         if remote.name:
++             new_session["remote_host"] = remote.name
++         elif remote.ip:
++             new_session["remote_host"] = remote.ip
++ 
++         self.tokens_cache[token_id] = new_session
++         return deepcopy(new_session)
++ 
++     def new_token_OIDC(self, indata, remote):
++         oidc_resource = self.config["authentication"]["oidc_resource"]
++         oidc_secret = self.config["authentication"]["oidc_secret"]
++         oidc_callback_url = self.config["authentication"]["oidc_callback_url"]
++ 
++         oidc_well_known_url = self.config["authentication"]["oidc_well_known_url"]
++         oidc_well_known_json = json.loads(urllib.request.urlopen(oidc_well_known_url).read().decode('utf-8'))
++         oidc_token_endpoint = oidc_well_known_json["token_endpoint"] 
++         code = indata.get("code")
++ 
++         url = oidc_token_endpoint
++         payload = "code=" + code + "&redirect_uri="+urllib.parse.quote(oidc_callback_url)+"&grant_type=authorization_code"
++ 
++         basic = base64.b64encode((oidc_resource + ':' + oidc_secret).encode()).decode("utf-8") 
++         headers = {
++             'Content-Type': "application/x-www-form-urlencoded",
++             'cache-control': "no-cache",
++             'Authorization': "Basic " + basic
++         }
++         login_response = requests.request("POST", url, data=payload, headers=headers)
++         access_token = login_response.json()['access_token']
++         
++         now = time()
++         user_content = None
++ 
++         user = self.decode_token_OIDC(access_token)
++ 
++         if user:
++             user_rows = self.db.get_list("users", {"username": user})
++             user_content = None
++             if user_rows:
++                 user_content = user_rows[0]
++                 if access_token == None:
++                     user_content = None
++             if not user_content:
++                 raise AuthException("Invalid username/password", http_code=HTTPStatus.UNAUTHORIZED)
++         else:
++             raise AuthException("Provide credentials: username/password or Authorization Bearer token",
++                                 http_code=HTTPStatus.UNAUTHORIZED)
++ 
++         token_id = str(access_token)
++         if indata.get("project_id"):
++             project_id = indata.get("project_id")
++             if project_id not in user_content["projects"]:
++                 raise AuthException("project {} not allowed for this user"
++                                     .format(project_id), http_code=HTTPStatus.UNAUTHORIZED)
++         else:
++ 
++             project_id = user_content["projects"][0]
++         if project_id == "admin":
++             session_admin = True
++         else:
++             project = self.db.get_one("projects", {"_id": project_id})
++             session_admin = project.get("admin", False)
++         new_session = {"issued_at": now, "expires": now + 3600,
++                        "_id": token_id, "id": token_id, "project_id": project_id, "username": user_content["username"],
++                        "remote_port": remote.port, "admin": session_admin}
++         if remote.name:
++             new_session["remote_host"] = remote.name
++         elif remote.ip:
++             new_session["remote_host"] = remote.ip
++ 
++         self.tokens_cache[token_id] = new_session
++         return deepcopy(new_session)
+\ No newline at end of file
+diff -rc --new-file NBI/osm_nbi/authconn_oidc.py NBI_MODIFIED/osm_nbi/authconn_oidc.py
+*** NBI/osm_nbi/authconn_oidc.py	1970-01-01 01:00:00.000000000 +0100
+--- NBI_MODIFIED/osm_nbi/authconn_oidc.py	2019-04-03 22:05:45.000000000 +0200
+***************
+*** 0 ****
+--- 1,28 ----
++ # -*- coding: utf-8 -*-
++ 
++ """
++ AuthconnOIDC implements the connector for OpenID Connect protocol,
++ Authorization Code flow and Implicit flow, to bring it for OSM.
++ """
++ 
++ 
++ from authconn import Authconn, AuthException, AuthconnOperationException
++ 
++ import jwt
++ from time import time
++ import requests
++ import jwt
++ import urllib.request
++ import json
++ import base64
++ import logging
++ from http import HTTPStatus
++ 
++ 
++ class AuthconnOIDC(Authconn):
++     def __init__(self, config):
++         Authconn.__init__(self, config)
++         self.logger = logging.getLogger("nbi.authenticator.oidc")
++ 
++     
++  
+diff -rc --new-file NBI/osm_nbi/nbi.cfg NBI_MODIFIED/osm_nbi/nbi.cfg
+*** NBI/osm_nbi/nbi.cfg	2019-04-03 22:57:25.000000000 +0200
+--- NBI_MODIFIED/osm_nbi/nbi.cfg	2019-04-03 19:04:45.000000000 +0200
+***************
+*** 89,92 ****
+  group_id: "nbi-server"
+  
+  [authentication]
+! backend: "internal"
+--- 89,97 ----
+  group_id: "nbi-server"
+  
+  [authentication]
+! #backend: "internal"
+! backend: "oidc"
+! oidc_well_known_url: "http://10.20.0.1:8080/auth/realms/osm/.well-known/openid-configuration"
+! oidc_resource: "osm1"
+! oidc_secret: "194d8bd5-33ec-493f-8d77-c5f1088dfe3e"
+! oidc_callback_url: "http://10.20.0.108/callback"
+diff -rc --new-file NBI/setup.py NBI_MODIFIED/setup.py
+*** NBI/setup.py	2019-04-03 22:57:25.000000000 +0200
+--- NBI_MODIFIED/setup.py	2019-04-03 14:24:09.000000000 +0200
+***************
+*** 57,63 ****
+          'jsonschema',
+          'PyYAML',
+          'osm-im',
+!         'python-keystoneclient'
+      ],
+      setup_requires=['setuptools-version-command'],
+  )
+--- 57,65 ----
+          'jsonschema',
+          'PyYAML',
+          'osm-im',
+!         'python-keystoneclient',
+!         'PyJWT',
+!         'cryptography'
+      ],
+      setup_requires=['setuptools-version-command'],
+  )

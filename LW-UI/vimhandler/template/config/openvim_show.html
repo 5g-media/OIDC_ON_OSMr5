@@ -1,0 +1,24 @@
+<div id="openvim_config_collapse" class="config-vim row">
+
+    <div class="col-lg-6">
+        <div class="row ">
+
+            <label for="ov_sdn_ctrl" class="col-sm-4 control-label">SDN Controller</label>
+            <div class="col-sm-6 input-group input-group-sm">
+                <p id="ov_sdn_ctrl"> {{ datacenter.sdn_ctrl|default:"---" }}</p>
+            </div>
+        </div>
+        <div class="row">
+            <label for="ov_sdn_port_map" class="col-sm-4 control-label">SDN Port Mapping</label>
+            <div class="col-sm-6 input-group input-group-sm">
+                <p id="ov_sdn_port_map"> {{ datacenter.sdn_port_map|default:"---" }}</p>
+            </div>
+        </div>
+        <div class="row">
+            <label for="ov_vim_network_name" class="col-sm-4 control-label">VIM network name</label>
+            <div class="col-sm-6 input-group input-group-sm">
+                <p id="ov_vim_network_name"> {{ datacenter.config.vim_network_name|default:"---" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
