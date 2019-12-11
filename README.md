@@ -126,13 +126,13 @@ sudo pip3 install ptvsd==3.0.0
 virtualenv --python=/Library/Frameworks/Python.framework/Versions/3.6/bin/python nbi
 source nbi/bin/activate
 
-# configure gerrit commit-msg hook
+### configure gerrit commit-msg hook
 curl -Lo NBI/.git/hooks/commit-msg http://osm.etsi.org/gerrit/tools/hooks/commit-msg
 chmod u+x NBI/.git/hooks/commit-msg
 cp NBI/.gitignore-common NBI/.gitignore
 sudo pip3 install -e NBI
 
-# install common
+### install common
 git clone https://osm.etsi.org/gerrit/osm/common
 sudo pip3 install -e common
 
@@ -144,21 +144,21 @@ log.screen: True
 tools.staticdir.dir: "<BASE_PATH>/NBI/osm_nbi/html_public"
 path: "<BASE_PATH>/NBI/osm_nbi/storage"
 
-# prepare storage/kafka folders in NBI/osm_nbi
+### prepare storage/kafka folders in NBI/osm_nbi
 mkdir storage
 cd storage
 mkdir kafka
 cd ../..
 sudo mkdir /var/log/osm
 
-# install pyang
+### install pyang
 #from the parent folder where NBI is
 sudo pip3 install pyang
 git clone https://github.com/robshakir/pyangbind
 sudo pip3 install -e pyangbind
 #if an error is produced: xcode-select --install
 
-# copy yang models
+### copy yang models
 scp ubuntu@10.20.0.108:/home/ubuntu/NBI/osm_nbi/* NBI/osm_nbi
 mkdir -p IM/models/yang
 scp ubuntu@10.20.0.108:/home/ubuntu/IM/models/yang/* IM/models/yang
