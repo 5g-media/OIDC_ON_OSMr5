@@ -9,7 +9,7 @@ pyaml==15.8.2
 pymongo==3.4.0
 python-dateutil==2.6.0
 PyYAML==3.12
-requests==2.12.4
+requests==2.20.0
 six==1.10.0
 smmap2==2.0.3
 url==0.2.0
