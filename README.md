@@ -136,10 +136,10 @@ sudo pip3 install -e NBI
 git clone https://osm.etsi.org/gerrit/osm/common
 sudo pip3 install -e common
 
-# change references to OSM services in /etc/hosts
+### change references to OSM services in /etc/hosts
 10.20.0.108 mongo ro kafka nbi ro-db
 
-# modify NBI/osm_nbi/nbi.cfg
+### modify NBI/osm_nbi/nbi.cfg
 log.screen: True
 tools.staticdir.dir: "<BASE_PATH>/NBI/osm_nbi/html_public"
 path: "<BASE_PATH>/NBI/osm_nbi/storage"
