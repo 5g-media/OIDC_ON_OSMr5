@@ -1,4 +1,4 @@
-#### HOWTO add OpenID Connect support to OSM r5 using Keycloak IAM #### 
+#### HOWTO add OpenID Connect support to OSM r5 using Keycloak IdP #### 
 
 The instructions below are parametric:
 <GITHUB_BASE_URL> is the base URL of the project on Github
