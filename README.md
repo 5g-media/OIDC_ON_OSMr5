@@ -4,27 +4,28 @@ The instructions below are parametric:
 - GITHUB-BASE-URL is the base URL of the project on Github
 - BASE-PATH is the base path of the cloned sources
 
-1) download and unzip Keycloak v4.5.0 (https://www.keycloak.org/archive/downloads-4.5.0.html)
+1) download and unzip Keycloak v4.5.0
 
 ```
-wget  https://downloads.jboss.org/keycloak/4.5.0.Final/adapters/keycloak-oidc/keycloak-wildfly-adapter-dist-4.5.0.Final.zip
-unzip keycloak-wildfly-adapter-dist-4.5.0.Final.zip
-cd keycloak-wildfly-adapter-dist-4.5.0.Final 
+mkdir keycloak-4.5.0.Final && cd keycloak-4.5.0.Final
+wget  https://downloads.jboss.org/keycloak/4.5.0.Final/keycloak-4.5.0.Final.zip
+unzip keycloak-4.5.0.Final.zip
+cd keycloak-4.5.0.Final
 ./bin/standalone.sh -b=0.0.0.0
 ```
 
-2) configure Keycloak - the instructions below report an example with a local OSM instance on VirtualBox available at 10.20.0.108
+2) configure Keycloak (the example below are for a local OSM instance at 10.20.0.108 - IP and ports will be different in your environment)
 * start keycloak and create a default admin user
 * for each OSM instance, in the "Clients" menu:
     * define a "client" (e.g. "osm1"), set the callback URL (e.g. http://10.20.0.108/callback), in "access type" configure "confidential", get the "Secret" form "Credentials" and put it into NBI nbi.cfg
     * define a role in "roles", one for each different OSM users (e.g. admin)
     * create a keycloak user and set the credentials (e.g. testosm1/testosm1); then, in "role mapping", add a "client" + "client role" mapping 
 
-3) install OSM R5 tag "v5.0.5" (the latest R5 tag available on date 11.02.2019)
+3) install OSM R5 tag "v5.0.5"
 
 Note: the OSM tag matches to [DOCKERHUB tag](https://hub.docker.com/r/opensourcemano/nbi/tags) and to GIT tag for [each component](e.g. https://osm.etsi.org/gitweb/?p=osm%2FNBI.git;a=shortlog;h=refs%2Fheads%2Fv5.0)
 
-OSM v5.0.5 installation can be replicated with `./install_osm.sh -t v5.0.5` (from binaries)
+OSM v5.0.5 installation can be replicated with `./install_osm.sh -t v5.0.5`
 see [OSM instructions](https://osm.etsi.org/wikipub/index.php/Advanced_OSM_installation_procedures) 
 and [specific v5.0.5 instructions](https://osm.etsi.org/wikipub/index.php/OSM_Release_FIVE) 
 
