@@ -46,12 +46,6 @@ cp OIDC_on_OSMr5/*.sh .
 docker stack rm osm && sleep 60
 ```
 
-- download patches
-
-```
-rm -fr OIDC_on_OSMr5
-git clone GITHUB-BASE-URL>/OIDC_on_OSMr5
-```
 
 - apply patch on NBI
 
