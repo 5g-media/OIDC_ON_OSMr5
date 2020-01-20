@@ -24,8 +24,9 @@ cd keycloak-wildfly-adapter-dist-4.5.0.Final
 
 Note: the OSM tag matches to [DOCKERHUB tag](https://hub.docker.com/r/opensourcemano/nbi/tags) and to GIT tag for [each component](e.g. https://osm.etsi.org/gitweb/?p=osm%2FNBI.git;a=shortlog;h=refs%2Fheads%2Fv5.0)
 
-OSM v5.0.5 installation can be replicated with `./install_osm.sh -R v5.0.5` (from binaries) or `./install_osm.sh -b v5.0.5` (from sources)
-[see instructions](https://osm.etsi.org/wikipub/index.php/Advanced_OSM_installation_procedures) 
+OSM v5.0.5 installation can be replicated with `./install_osm.sh -t v5.0.5` (from binaries)
+see [OSM instructions](https://osm.etsi.org/wikipub/index.php/Advanced_OSM_installation_procedures) 
+and [specific v5.0.5 instructions](https://osm.etsi.org/wikipub/index.php/OSM_Release_FIVE) 
 
 Note: if osmclient install fails, redo the installation with the instructions [here](https://osm.etsi.org/wikipub/index.php/OSM_client#Installation) using the tag v5.0.5
 
