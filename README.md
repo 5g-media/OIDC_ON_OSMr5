@@ -57,7 +57,7 @@ patch -p1 -i ../OIDC_ON_OSMr5/PATCH/NBI.patch
 cd ..
 #build a new NBI container and update OSM service
 #change NBI/Dockerfile.local with python3 mock.py for test
-docker image rm `docker images | grep nbi | grep develop | awk '{print $1 ":" $2}'`
+docker images rm `docker images | grep nbi | grep develop | awk '{print $1 ":" $2}'`
 docker build NBI -f NBI/Dockerfile.local -t opensourcemano/nbi:develop --no-cache
 ```
 
@@ -74,7 +74,7 @@ cd ..
 - build a new LW-UI container and update OSM service (change LW-UI/docker/Dockerfile with python mock.py for test)
 
 ```
-docker image rm `docker images | grep light-ui | grep develop | awk '{print $1 ":" $2}'`
+docker images rm `docker images | grep light-ui | grep develop | awk '{print $1 ":" $2}'`
 docker build LW-UI -f LW-UI/docker/Dockerfile -t opensourcemano/light-ui:develop --no-cache
 ```
 
