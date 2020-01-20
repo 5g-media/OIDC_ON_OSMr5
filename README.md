@@ -36,7 +36,7 @@ Note: if osmclient install fails, redo the installation with the instructions [h
 - clone scripts from OSM VM
 
 ```
-git clone GITHUB-BASE-URL/OIDC_on_OSMr5
+git clone GITHUB-BASE-URL/OIDC_ON_OSMr5
 cp OIDC_ON_OSMr5/*.sh .
 ```
 
@@ -53,7 +53,7 @@ docker stack rm osm && sleep 60
 rm -fr NBI
 git clone -b v5.0.5 https://osm.etsi.org/gerrit/osm/NBI 
 cd NBI
-patch -p1 -i ../OIDC_on_OSMr5/PATCH/NBI.patch
+patch -p1 -i ../OIDC_ON_OSMr5/PATCH/NBI.patch
 cd ..
 #build a new NBI container and update OSM service
 #change NBI/Dockerfile.local with python3 mock.py for test
@@ -67,7 +67,7 @@ docker build NBI -f NBI/Dockerfile.local -t opensourcemano/nbi:develop --no-cach
 rm -fr LW-UI
 git clone -b v5.0.5 https://osm.etsi.org/gerrit/osm/LW-UI 
 cd LW-UI
-patch -p1 -i ../OIDC_on_OSMr5/PATCH/LW-UI.patch
+patch -p1 -i ../OIDC_ON_OSMr5/PATCH/LW-UI.patch
 cd ..
 ```
 
