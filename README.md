@@ -37,7 +37,7 @@ Note: if osmclient install fails, redo the installation with the instructions [h
 
 ```
 git clone GITHUB-BASE-URL/OIDC_on_OSMr5
-cp OIDC_on_OSMr5/*.sh .
+cp OIDC_ON_OSMr5/*.sh .
 ```
 
 - stop OSM
