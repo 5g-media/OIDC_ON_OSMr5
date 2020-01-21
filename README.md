@@ -14,10 +14,11 @@ cd keycloak-4.5.0.Final
 ./bin/standalone.sh -b=0.0.0.0
 ```
 
-2) configure Keycloak (the example below are for a local OSM instance at 10.20.0.108 - IP and ports will be different in your environment)
+3) configure Keycloak (the example below are for a local OSM instance at 10.20.0.108 - IP and ports will be different in your environment)
 * start keycloak and create a default admin user
+* create the realm "osm"
 * for each OSM instance, in the "Clients" menu:
-    * define a "client" (e.g. "osm1"), set the callback URL (e.g. http://10.20.0.108/callback), in "access type" configure "confidential", get the "Secret" form "Credentials" and put it into NBI nbi.cfg
+    * define a "client" (e.g. "osm1"), set the callback URL (e.g. http://10.20.0.108/callback), in "access type" configure "confidential", get the "Secret" form "Credentials" and put later into the NBI nbi.cfg and the LW-UI settings.py
     * define a role in "roles", one for each different OSM users (e.g. admin)
     * create a keycloak user and set the credentials (e.g. testosm1/testosm1); then, in "role mapping", add a "client" + "client role" mapping 
 
@@ -47,7 +48,7 @@ docker stack rm osm && sleep 60
 ```
 
 
-- apply patch on NBI
+- apply patch on NBI..
 
 ```
 rm -fr NBI
@@ -60,8 +61,10 @@ cd ..
 docker images rm `docker images | grep nbi | grep develop | awk '{print $1 ":" $2}'`
 docker build NBI -f NBI/Dockerfile.local -t opensourcemano/nbi:develop --no-cache
 ```
+  ..and change /app/NBI/osm_nbi/nbi.cfg with the KeyCloak configuration
 
-- apply patch on LW-UI
+
+- apply patch on LW-UI..
 
 ```
 rm -fr LW-UI
@@ -70,6 +73,7 @@ cd LW-UI
 patch -p1 -i ../OIDC_ON_OSMr5/PATCH/LW-UI.patch
 cd ..
 ```
+  ..and change /usr/share/osm-lightui/sf_t3d/settings.py with the KeyCloak configuration
 
 - build a new LW-UI container and update OSM service (change LW-UI/docker/Dockerfile with python mock.py for test)
 
@@ -88,19 +92,42 @@ sudo sed -i "s/light-ui\:\${TAG\:-latest}/light-ui\:\${TAG\:-develop}/" /etc/osm
 - start OSM
 
 ```
+docker stack remove osm
 docker stack deploy -c /etc/osm/docker/docker-compose.yaml osm
 ```
 
-- to build containers `build_containers.sh`, to build mock containers `build_mock.sh`
+5) OPTIONAL - if needed, configure OIDC on NBI and LW-UI **AFTER** the containers are built
 
+NBI
 
-5) login on OSM using the keycloak user credentials 
-- via browser ("authorization code flow")
+```
+docker cp `docker ps | grep nbi | awk '{print $1}'`:/app/NBI/osm_nbi/nbi.cfg nbi.cfg
+```
+change nbi.cfg and update OSM
+
+```
+docker config create nbi.cfg nbi.cfg
+docker service update --config-add source=nbi.cfg,target=/app/NBI/osm_nbi/nbi.cfg,mode=0440 osm_nbi
+```
+
+LW-UI
+
+```
+docker cp  `docker ps | grep light | awk '{print $1}'`:/usr/share/osm-lightui/sf_t3d/settings.py settings.py
+```
+change settings.py and update OSM
+
+```
+docker config create settings.py settings.py
+docker service update --config-add source=settings.py,target=/usr/share/osm-lightui/sf_t3d/settings.py,mode=0440 osm_light-ui
+```
+
+6) login on OSM using the keycloak user credentials 
+#####through browser ("authorization code flow")
 open http://10.20.0.108, click on "OpenID Connect Sign In", login with Keycloak user credentials, have access to OSM UI automatically
 
-- via API ("resource owner password credential flow")
-
-- get the a token ("my_token") from Keycloak using user credentials (username/password)
+#####through API ("resource owner password credential flow")
+get the a token ("my_token") from Keycloak using user credentials (username/password)
 
 ```
   curl --user client_id:client_secret -X POST \
@@ -110,7 +137,7 @@ open http://10.20.0.108, click on "OpenID Connect Sign In", login with Keycloak 
   -d 'grant_type=password&username=myusername&password=mypassword'
 ```
 
-- use the Keycloak token ("my_token") to access protected resources on OSM
+use the Keycloak token ("my_token") to access protected resources on OSM
 
 ```
   curl -X GET \
