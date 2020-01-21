@@ -14,7 +14,7 @@ cd keycloak-4.5.0.Final
 ./bin/standalone.sh -b=0.0.0.0
 ```
 
-3) configure Keycloak (the example below are for a local OSM instance at 10.20.0.108 - IP and ports will be different in your environment)
+2) configure Keycloak (the example below are for a local OSM instance at 10.20.0.108 - IP and ports will be different in your environment)
 * start keycloak and create a default admin user
 * create the realm "osm"
 * for each OSM instance, in the "Clients" menu:
