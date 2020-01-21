@@ -123,10 +123,11 @@ docker service update --config-add source=settings.py,target=/usr/share/osm-ligh
 ```
 
 6) login on OSM using the keycloak user credentials 
-#####through browser ("authorization code flow")
+
+**through browser** ("authorization code flow")
 open http://10.20.0.108, click on "OpenID Connect Sign In", login with Keycloak user credentials, have access to OSM UI automatically
 
-#####through API ("resource owner password credential flow")
+**through API** ("resource owner password credential flow")
 get the a token ("my_token") from Keycloak using user credentials (username/password)
 
 ```
