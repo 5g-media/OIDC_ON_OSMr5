@@ -32,7 +32,7 @@ and [specific v5.0.5 instructions](https://osm.etsi.org/wikipub/index.php/OSM_Re
 
 Note: if osmclient install fails, redo the installation with the instructions [here](https://osm.etsi.org/wikipub/index.php/OSM_client#Installation) using the tag v5.0.5
 
-OPTIONAL: fix MTU
+OPTIONAL: fix MTU with fix_mtu.sh script
 
 4) start OSM *but* with fixed docker-compose for v5.0.5 [pointing to v5.0.5](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform)
 
