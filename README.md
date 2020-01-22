@@ -1,7 +1,7 @@
 ### HOWTO add OpenID Connect support to OSM r5 using Keycloak IAM ### 
 
 The instructions below are parametric:
-- GITHUB-BASE-URL is the base URL of the project on Github
+- GITHUB-BASE-URL is the base URL of the project on Github (the stable release is https://github.com/5g-media/OIDC_ON_OSMr5.git)
 - BASE-PATH is the base path of the cloned sources
 
 1) download and unzip Keycloak v4.5.0
@@ -32,7 +32,25 @@ and [specific v5.0.5 instructions](https://osm.etsi.org/wikipub/index.php/OSM_Re
 
 Note: if osmclient install fails, redo the installation with the instructions [here](https://osm.etsi.org/wikipub/index.php/OSM_client#Installation) using the tag v5.0.5
 
-4) apply [patches to NBI and LW-UI](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform#Upgrading_a_specific_component_to_use_your_own_cloned_repo_.28e.g._for_developing_purposes.29)
+OPTIONAL: fix MTU
+
+4) start OSM *but* with fixed docker-compose for v5.0.5 [pointing to v5.0.5](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform)
+
+```
+
+sudo sed -i "s/ro\:\${TAG\:-latest}/ro\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
+sudo sed -i "s/lcm\:\${TAG\:-latest}/lcm\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
+sudo sed -i "s/mon\:\${TAG\:-latest}/mon\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
+sudo sed -i "s/pol\:\${TAG\:-latest}/pol\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
+sudo sed -i "s/nbi\:\${TAG\:-latest}/nbi\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
+sudo sed -i "s/light-ui\:\${TAG\:-latest}/light-ui\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
+sudo sed -i "s/keystone\:\${TAG\:-latest}/keystone\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
+
+docker stack remove osm
+docker stack deploy -c /etc/osm/docker/docker-compose.yaml osm
+```
+
+5) apply [patches to NBI and LW-UI](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform#Upgrading_a_specific_component_to_use_your_own_cloned_repo_.28e.g._for_developing_purposes.29)
 
 - clone scripts from OSM VM
 
@@ -58,8 +76,8 @@ patch -p1 -i ../OIDC_ON_OSMr5/PATCH/NBI.patch
 cd ..
 #build a new NBI container and update OSM service
 #change NBI/Dockerfile.local with python3 mock.py for test
-docker images rm `docker images | grep nbi | grep develop | awk '{print $1 ":" $2}'`
-docker build NBI -f NBI/Dockerfile.local -t opensourcemano/nbi:develop --no-cache
+#OPTIONAL docker images rm `docker images | grep nbi | grep v5.0.5 | awk '{print $1 ":" $2}'`
+docker build NBI -f NBI/Dockerfile.local -t opensourcemano/nbi:v5.0.5OIDC --no-cache
 ```
   ..and change /app/NBI/osm_nbi/nbi.cfg with the KeyCloak configuration
 
@@ -78,25 +96,24 @@ cd ..
 - build a new LW-UI container and update OSM service (change LW-UI/docker/Dockerfile with python mock.py for test)
 
 ```
-docker images rm `docker images | grep light-ui | grep develop | awk '{print $1 ":" $2}'`
-docker build LW-UI -f LW-UI/docker/Dockerfile -t opensourcemano/light-ui:develop --no-cache
+#OPTIONAL docker images rm `docker images | grep light-ui | grep v5.0.5 | awk '{print $1 ":" $2}'`
+docker build LW-UI -f LW-UI/docker/Dockerfile -t opensourcemano/light-ui:v5.0.5OIDC --no-cache
 ```
 
 - configure OSM to use NBI and LW-UI develop containers after restart/reboot
 
 ```
-sudo sed -i "s/nbi\:\${TAG\:-latest}/nbi\:\${TAG\:-develop}/" /etc/osm/docker/docker-compose.yaml
-sudo sed -i "s/light-ui\:\${TAG\:-latest}/light-ui\:\${TAG\:-develop}/" /etc/osm/docker/docker-compose.yaml
+sudo sed -i "s/nbi\:v5.0.5/nbi\:v5.0.5OIDC/" /etc/osm/docker/docker-compose.yaml
+sudo sed -i "s/light-ui\:v5.0.5/light-ui\:v5.0.5OIDC/" /etc/osm/docker/docker-compose.yaml
 ```
-
-- start OSM
+- deploy OSM
 
 ```
-docker stack remove osm
 docker stack deploy -c /etc/osm/docker/docker-compose.yaml osm
 ```
 
-5) OPTIONAL - if needed, configure OIDC on NBI and LW-UI **AFTER** the containers are built
+
+6) OPTIONAL - if needed, configure OIDC on NBI and LW-UI **AFTER** the containers are built
 
 NBI
 
@@ -122,7 +139,7 @@ docker config create settings.py settings.py
 docker service update --config-add source=settings.py,target=/usr/share/osm-lightui/sf_t3d/settings.py,mode=0440 osm_light-ui
 ```
 
-6) login on OSM using the keycloak user credentials 
+7) login on OSM using the keycloak user credentials 
 
 **through browser** ("authorization code flow")
 open http://10.20.0.108, click on "OpenID Connect Sign In", login with Keycloak user credentials, have access to OSM UI automatically
