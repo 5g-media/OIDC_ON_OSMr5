@@ -44,9 +44,9 @@ VERSION = "0.0.1"
 
 # Open ID Connect redirect URL for "Authorization Code Flow" + callback URL
 # See https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth
-OIDC_URL = 'http://localhost:8080/auth/realms/osm/protocol/openid-connect/auth?response_type=code&scope=openid&client_id=osm1&redirect_uri=http%3A%2F%2F10.20.0.108%2Fcallback'
-OIDC_CALLBACK= 'http://10.20.0.108/callback'
-OSM_SERVER = "10.20.0.108"
+OIDC_URL = 'http://10.20.0.155:8080/auth/realms/osm/protocol/openid-connect/auth?response_type=code&scope=openid&client_id=osm1&redirect_uri=http%3A%2F%2F10.20.0.155%2Fcallback'
+OIDC_CALLBACK= 'http://10.20.0.155/callback'
+OSM_SERVER = "10.20.0.155"
 
 
 # Application definition
