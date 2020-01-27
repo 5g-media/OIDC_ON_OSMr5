@@ -1,6 +1,6 @@
 diff -rc --new-file NBI/Dockerfile.local NBI_MODIFIED/Dockerfile.local
-*** NBI/Dockerfile.local	2019-04-03 22:57:25.000000000 +0200
---- NBI_MODIFIED/Dockerfile.local	2019-04-03 14:24:09.000000000 +0200
+*** NBI/Dockerfile.local	Mon Jan 27 12:56:30 2020
+--- NBI_MODIFIED/Dockerfile.local	Mon Jan 27 12:55:25 2020
 ***************
 *** 15,27 ****
   
@@ -35,6 +35,16 @@ diff -rc --new-file NBI/Dockerfile.local NBI_MODIFIED/Dockerfile.local
   
   # OSM_COMMON
 ***************
+*** 37,42 ****
+--- 41,47 ----
+      && pip3 install -e /app/pyangbind \
+      && git -C /app clone  https://osm.etsi.org/gerrit/osm/IM \
+      && cd /app/IM/models/yang \
++     && rm -fr /app/IM/osm_im \
+      && mkdir /app/IM/osm_im \
+      && pyang --plugindir /app/pyangbind/pyangbind/plugin -f pybind -o /app/IM/osm_im/vnfd.py vnfd.yang \
+      && pyang --plugindir /app/pyangbind/pyangbind/plugin -f pybind -o /app/IM/osm_im/nsd.py nsd.yang \
+***************
 *** 78,84 ****
   ENV OSMNBI_MESSAGE_HOST                         kafka
   ENV OSMNBI_MESSAGE_PORT                         9092
@@ -43,7 +53,7 @@ diff -rc --new-file NBI/Dockerfile.local NBI_MODIFIED/Dockerfile.local
   #ENV OSMNBI_AUTHENTICATION_BACKEND               keystone
   #ENV OSMNBI_AUTHENTICATION_AUTH_URL              keystone
   #ENV OSMNBI_AUTHENTICATION_AUTH_PORT             5000
---- 82,89 ----
+--- 83,90 ----
   ENV OSMNBI_MESSAGE_HOST                         kafka
   ENV OSMNBI_MESSAGE_PORT                         9092
   # authentication
@@ -53,8 +63,8 @@ diff -rc --new-file NBI/Dockerfile.local NBI_MODIFIED/Dockerfile.local
   #ENV OSMNBI_AUTHENTICATION_AUTH_URL              keystone
   #ENV OSMNBI_AUTHENTICATION_AUTH_PORT             5000
 diff -rc --new-file NBI/osm_nbi/auth.py NBI_MODIFIED/osm_nbi/auth.py
-*** NBI/osm_nbi/auth.py	2019-04-03 22:57:25.000000000 +0200
---- NBI_MODIFIED/osm_nbi/auth.py	2019-04-03 22:57:13.000000000 +0200
+*** NBI/osm_nbi/auth.py	Mon Jan 27 12:56:30 2020
+--- NBI_MODIFIED/osm_nbi/auth.py	Wed May 15 10:53:36 2019
 ***************
 *** 35,44 ****
 --- 35,55 ----
@@ -243,8 +253,8 @@ diff -rc --new-file NBI/osm_nbi/auth.py NBI_MODIFIED/osm_nbi/auth.py
 +         return deepcopy(new_session)
 \ No newline at end of file
 diff -rc --new-file NBI/osm_nbi/authconn_oidc.py NBI_MODIFIED/osm_nbi/authconn_oidc.py
-*** NBI/osm_nbi/authconn_oidc.py	1970-01-01 01:00:00.000000000 +0100
---- NBI_MODIFIED/osm_nbi/authconn_oidc.py	2019-04-03 22:05:45.000000000 +0200
+*** NBI/osm_nbi/authconn_oidc.py	Thu Jan  1 01:00:00 1970
+--- NBI_MODIFIED/osm_nbi/authconn_oidc.py	Wed Apr  3 22:05:45 2019
 ***************
 *** 0 ****
 --- 1,28 ----
@@ -277,8 +287,8 @@ diff -rc --new-file NBI/osm_nbi/authconn_oidc.py NBI_MODIFIED/osm_nbi/authconn_o
 +     
 +  
 diff -rc --new-file NBI/osm_nbi/nbi.cfg NBI_MODIFIED/osm_nbi/nbi.cfg
-*** NBI/osm_nbi/nbi.cfg	2019-04-03 22:57:25.000000000 +0200
---- NBI_MODIFIED/osm_nbi/nbi.cfg	2019-04-03 19:04:45.000000000 +0200
+*** NBI/osm_nbi/nbi.cfg	Mon Jan 27 12:56:30 2020
+--- NBI_MODIFIED/osm_nbi/nbi.cfg	Mon Jan 27 12:39:02 2020
 ***************
 *** 89,92 ****
   group_id: "nbi-server"
@@ -291,13 +301,13 @@ diff -rc --new-file NBI/osm_nbi/nbi.cfg NBI_MODIFIED/osm_nbi/nbi.cfg
   [authentication]
 ! #backend: "internal"
 ! backend: "oidc"
-! oidc_well_known_url: "http://10.20.0.1:8080/auth/realms/osm/.well-known/openid-configuration"
+! oidc_well_known_url: "http://10.20.0.155:8080/auth/realms/osm/.well-known/openid-configuration"
 ! oidc_resource: "osm1"
-! oidc_secret: "194d8bd5-33ec-493f-8d77-c5f1088dfe3e"
-! oidc_callback_url: "http://10.20.0.108/callback"
+! oidc_secret: "beb35e44-4084-48e9-967e-da7ec584b3c9"
+! oidc_callback_url: "http://10.20.0.155/callback"
 diff -rc --new-file NBI/setup.py NBI_MODIFIED/setup.py
-*** NBI/setup.py	2019-04-03 22:57:25.000000000 +0200
---- NBI_MODIFIED/setup.py	2019-04-03 14:24:09.000000000 +0200
+*** NBI/setup.py	Mon Jan 27 12:56:30 2020
+--- NBI_MODIFIED/setup.py	Wed Apr  3 14:24:09 2019
 ***************
 *** 57,63 ****
           'jsonschema',
