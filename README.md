@@ -45,8 +45,6 @@ OSM v5.0.5 installation can be replicated with `./install_osm.sh -t v5.0.5`
 see [OSM instructions](https://osm.etsi.org/wikipub/index.php/Advanced_OSM_installation_procedures) 
 and [specific v5.0.5 instructions](https://osm.etsi.org/wikipub/index.php/OSM_Release_FIVE) 
 
-OPTIONAL: fix MTU with fix_mtu.sh script
-
 6) fix docker-compose for v5.0.5 [pointing to v5.0.5](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform), then start OSM
 
 ```
@@ -62,6 +60,8 @@ sudo sed -i "s/keystone\:\${TAG\:-latest}/keystone\:v5.0.5/" /etc/osm/docker/doc
 docker stack remove osm && sleep 60
 docker stack deploy -c /etc/osm/docker/docker-compose.yaml osm
 ```
+
+OPTIONAL: fix MTU with fix_mtu.sh script
 
 7) apply [patches to NBI and LW-UI](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform#Upgrading_a_specific_component_to_use_your_own_cloned_repo_.28e.g._for_developing_purposes.29)
 
@@ -164,6 +164,8 @@ ACCESS_TOKEN=$(curl --location --request POST 'http://10.20.0.155:8080/auth/real
 --data-urlencode 'username=testosm1' \
 --data-urlencode 'password=testosm1' | jq -r '.access_token')
 ```
+
+OPTIONAL: in case of SSL errors, please check the KeyCloak "SSL required" option for the osm realm 
 
 2) use token to access protected resources on OSM
 
