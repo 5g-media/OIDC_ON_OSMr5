@@ -1,4 +1,4 @@
-### HOWTO add OpenID Connect support to OSM r5 using Keycloak IAM ### 
+### HOWTO add OpenID Connect support to OSM r5 using Keycloak IDP ### 
 
 The instructions allow to replicate the tests on a local VM with fixed IP, e.g. on a VirtualBox 
 
