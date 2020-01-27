@@ -128,11 +128,17 @@ NBI
 ```
 docker cp `docker ps | grep nbi | awk '{print $1}'`:/app/NBI/osm_nbi/nbi.cfg nbi.cfg
 ```
-change nbi.cfg and update OSM
+change nbi.cfg and update OSM..
 
 ```
 docker config create nbi.cfg nbi.cfg
 docker service update --config-add source=nbi.cfg,target=/app/NBI/osm_nbi/nbi.cfg,mode=0440 osm_nbi
+```
+
+..or update the existing configuration
+
+```
+docker service update --config-rm nbi.cfg --config-add source=nbi.cfg,target=/app/NBI/osm_nbi/nbi.cfg,mode=0440 osm_nbi
 ```
 
 LW-UI
@@ -140,11 +146,17 @@ LW-UI
 ```
 docker cp  `docker ps | grep light | awk '{print $1}'`:/usr/share/osm-lightui/sf_t3d/settings.py settings.py
 ```
-change settings.py and update OSM
+change settings.py and update OSM..
 
 ```
 docker config create settings.py settings.py
 docker service update --config-add source=settings.py,target=/usr/share/osm-lightui/sf_t3d/settings.py,mode=0440 osm_light-ui
+```
+
+..or update the existing configuration
+
+```
+docker service update --config-rm settings.py --config-add source=settings.py,target=/usr/share/osm-lightui/sf_t3d/settings.py,mode=0440 osm_light-ui
 ```
 
 9) login on OSM using the keycloak user credentials 
