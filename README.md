@@ -1,28 +1,43 @@
 ### HOWTO add OpenID Connect support to OSM r5 using Keycloak IAM ### 
 
-The instructions below are parametric:
-- GITHUB-BASE-URL is the base URL of the project on Github (the stable release is https://github.com/5g-media/OIDC_ON_OSMr5.git)
-- BASE-PATH is the base path of the cloned sources
+The instructions allow to replicate the tests on a local VM with fixed IP, e.g. on a VirtualBox 
 
-1) download and unzip Keycloak v4.5.0
+1) on VirtualBox, create a VM with 8GB RAM, 30GB DISK, add a secondary network adapter (so, NAT + "host-only" adapters) 
+2) configure a static ip such as 10.20.0.155 on the "host-only" adapter
+
+- add to /etc/network/interfaces and restart networking service
 
 ```
-mkdir keycloak-4.5.0.Final && cd keycloak-4.5.0.Final
+auto enp0s8
+iface enp0s8 inet static
+address 10.20.0.155
+netmask 255.255.255.0
+network 10.20.0.0
+broadcast 10.20.0.255
+```
+
+3) from a clean Ubuntu16.04 server image, install pre-requirements, download and unzip Keycloak v4.5.0, change KeyCloak port 8443 to 8143
+
+```
+sudo apt-get install -y unzip
+sudo apt-get install -y openjdk-8-jdk
+
 wget  https://downloads.jboss.org/keycloak/4.5.0.Final/keycloak-4.5.0.Final.zip
 unzip keycloak-4.5.0.Final.zip
 cd keycloak-4.5.0.Final
-./bin/standalone.sh -b=0.0.0.0
+#change 8443 port in standalone/configuration/standalone.xml, e.g. from 8443 to 8143
+nohup ./bin/standalone.sh -b=0.0.0.0 &
 ```
 
-2) configure Keycloak (the example below are for a local OSM instance at 10.20.0.108 - IP and ports will be different in your environment)
+4) configure Keycloak (the example below are for a local OSM instance at 10.20.0.155)
 * start keycloak and create a default admin user
 * create the realm "osm"
 * for each OSM instance, in the "Clients" menu:
-    * define a "client" (e.g. "osm1"), set the callback URL (e.g. http://10.20.0.108/callback), in "access type" configure "confidential", get the "Secret" form "Credentials" and put later into the NBI nbi.cfg and the LW-UI settings.py
-    * define a role in "roles", one for each different OSM users (e.g. admin)
-    * create a keycloak user and set the credentials (e.g. testosm1/testosm1); then, in "role mapping", add a "client" + "client role" mapping 
+    * define a "client" (e.g. "osm1"), set the callback URL (e.g. http://10.20.0.155/callback), in "access type" configure "confidential", get the "Secret" from "Credentials" and use it later into the NBI nbi.cfg
+    * define a role in "client -> roles", one for each different OSM user type (e.g. admin)
+    * create a keycloak user and set the credentials (e.g. testosm1/testosm1); then, in "role mapping", add a "client" + "client role" mapping, so that testosm1 will impersonate, for each client (e.g. osm1, osm2, etc.), the specific client-role (e.g. admin)
 
-3) install OSM R5 tag "v5.0.5"
+5) install OSM R5 tag "v5.0.5"
 
 Note: the OSM tag matches to [DOCKERHUB tag](https://hub.docker.com/r/opensourcemano/nbi/tags) and to GIT tag for [each component](e.g. https://osm.etsi.org/gitweb/?p=osm%2FNBI.git;a=shortlog;h=refs%2Fheads%2Fv5.0)
 
@@ -30,11 +45,9 @@ OSM v5.0.5 installation can be replicated with `./install_osm.sh -t v5.0.5`
 see [OSM instructions](https://osm.etsi.org/wikipub/index.php/Advanced_OSM_installation_procedures) 
 and [specific v5.0.5 instructions](https://osm.etsi.org/wikipub/index.php/OSM_Release_FIVE) 
 
-Note: if osmclient install fails, redo the installation with the instructions [here](https://osm.etsi.org/wikipub/index.php/OSM_client#Installation) using the tag v5.0.5
-
 OPTIONAL: fix MTU with fix_mtu.sh script
 
-4) start OSM *but* with fixed docker-compose for v5.0.5 [pointing to v5.0.5](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform)
+6) fix docker-compose for v5.0.5 [pointing to v5.0.5](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform), then start OSM
 
 ```
 
@@ -46,16 +59,16 @@ sudo sed -i "s/nbi\:\${TAG\:-latest}/nbi\:v5.0.5/" /etc/osm/docker/docker-compos
 sudo sed -i "s/light-ui\:\${TAG\:-latest}/light-ui\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
 sudo sed -i "s/keystone\:\${TAG\:-latest}/keystone\:v5.0.5/" /etc/osm/docker/docker-compose.yaml
 
-docker stack remove osm
+docker stack remove osm && sleep 60
 docker stack deploy -c /etc/osm/docker/docker-compose.yaml osm
 ```
 
-5) apply [patches to NBI and LW-UI](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform#Upgrading_a_specific_component_to_use_your_own_cloned_repo_.28e.g._for_developing_purposes.29)
+7) apply [patches to NBI and LW-UI](https://osm.etsi.org/wikipub/index.php/How_to_upgrade_the_OSM_Platform#Upgrading_a_specific_component_to_use_your_own_cloned_repo_.28e.g._for_developing_purposes.29)
 
 - clone scripts from OSM VM
 
 ```
-git clone GITHUB-BASE-URL/OIDC_ON_OSMr5
+git clone https://github.com/5g-media/OIDC_ON_OSMr5.git
 cp OIDC_ON_OSMr5/*.sh .
 ```
 
@@ -66,7 +79,7 @@ docker stack rm osm && sleep 60
 ```
 
 
-- apply patch on NBI..
+- apply patch on NBI, change the /app/NBI/osm_nbi/nbi.cfg and build the container image
 
 ```
 rm -fr NBI
@@ -74,15 +87,14 @@ git clone -b v5.0.5 https://osm.etsi.org/gerrit/osm/NBI
 cd NBI
 patch -p1 -i ../OIDC_ON_OSMr5/PATCH/NBI.patch
 cd ..
-#build a new NBI container and update OSM service
-#change NBI/Dockerfile.local with python3 mock.py for test
+
 #OPTIONAL docker images rm `docker images | grep nbi | grep v5.0.5 | awk '{print $1 ":" $2}'`
+#change /app/NBI/osm_nbi/nbi.cfg with the KeyCloak configuration: at least "secret" will be different, see KeyCloak configuration above
 docker build NBI -f NBI/Dockerfile.local -t opensourcemano/nbi:v5.0.5OIDC --no-cache
 ```
-  ..and change /app/NBI/osm_nbi/nbi.cfg with the KeyCloak configuration
+  
 
-
-- apply patch on LW-UI..
+- apply patch on LW-UI, change the /usr/share/osm-lightui/sf_t3d/settings.py and build the container image
 
 ```
 rm -fr LW-UI
@@ -90,13 +102,9 @@ git clone -b v5.0.5 https://osm.etsi.org/gerrit/osm/LW-UI
 cd LW-UI
 patch -p1 -i ../OIDC_ON_OSMr5/PATCH/LW-UI.patch
 cd ..
-```
-  ..and change /usr/share/osm-lightui/sf_t3d/settings.py with the KeyCloak configuration
 
-- build a new LW-UI container and update OSM service (change LW-UI/docker/Dockerfile with python mock.py for test)
-
-```
 #OPTIONAL docker images rm `docker images | grep light-ui | grep v5.0.5 | awk '{print $1 ":" $2}'`
+#change /usr/share/osm-lightui/sf_t3d/settings.py with the KeyCloak configuration
 docker build LW-UI -f LW-UI/docker/Dockerfile -t opensourcemano/light-ui:v5.0.5OIDC --no-cache
 ```
 
@@ -113,7 +121,7 @@ docker stack deploy -c /etc/osm/docker/docker-compose.yaml osm
 ```
 
 
-6) OPTIONAL - if needed, configure OIDC on NBI and LW-UI **AFTER** the containers are built
+8) OPTIONAL - if needed, configure OIDC on NBI and LW-UI **AFTER** the containers are built
 
 NBI
 
@@ -139,57 +147,48 @@ docker config create settings.py settings.py
 docker service update --config-add source=settings.py,target=/usr/share/osm-lightui/sf_t3d/settings.py,mode=0440 osm_light-ui
 ```
 
-7) login on OSM using the keycloak user credentials 
+9) login on OSM using the keycloak user credentials 
 
-**through browser** ("authorization code flow")
-open http://10.20.0.108, click on "OpenID Connect Sign In", login with Keycloak user credentials, have access to OSM UI automatically
+**UI (browser)** ("authorization code flow")
+open http://10.20.0.155, click on "OpenID Connect Sign In", login with Keycloak user credentials (testosm1/testosm1), get access to OSM UI automatically
 
-**through API** ("resource owner password credential flow")
-get the a token ("my_token") from Keycloak using user credentials (username/password)
-
-```
-  curl --user client_id:client_secret -X POST \
-  http://OIDC_SERVER:8080/auth/realms/master/protocol/openid-connect/token \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'cache-control: no-cache' \
-  -d 'grant_type=password&username=myusername&password=mypassword'
-```
-
-use the Keycloak token ("my_token") to access protected resources on OSM
+**M2M (API)** ("resource owner password credential flow")
+1) get the a token from Keycloak using user credentials (username/password)
 
 ```
-  curl -X GET \
-  https://OSM_SERVER:9999/osm/admin/v1/projects \
+ACCESS_TOKEN=$(curl --location --request POST 'http://10.20.0.155:8080/auth/realms/osm/protocol/openid-connect/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data-urlencode 'grant_type=password' \
+--data-urlencode 'client_id=osm1' \
+--data-urlencode 'client_secret=beb35e44-4084-48e9-967e-da7ec584b3c9' \
+--data-urlencode 'username=testosm1' \
+--data-urlencode 'password=testosm1' | jq -r '.access_token')
+```
+
+2) use token to access protected resources on OSM
+
+```
+  curl -k -X GET \
+  https://10.20.0.155:9999/osm/admin/v1/projects \
   -H 'Content-Type: application/yaml' \
   -H 'cache-control: no-cache' \
-  -H "Authorization: Bearer my_token"
+  -H "Authorization: Bearer $ACCESS_TOKEN"
  ```
   
+  
+
 #### HOWTO REPLICATE THE DEVELOPMENT ENVIRONMENT #### 
 
-1) install OSM on VirtualBox and configure a static ip such as 10.20.0.108 with NAT + "host-only" adapters
-
-- add to /etc/network/interfaces and restart networking service
-
-```
-auto enp0s8
-iface enp0s8 inet static
-address 10.20.0.108
-netmask 255.255.255.0
-network 10.20.0.0
-broadcast 10.20.0.255
-```
-
-2) on OSM, disable nbi and lw-ui services
+1) on OSM, disable nbi and lw-ui services
 
 ```
 docker service scale osm_light-ui=0
 docker service scale osm_nbi=0
 ```
 
-3) on localhost, clone NBI and LW-UI components and apply the patches - see above
+2) on localhost, clone NBI and LW-UI components and apply the patches - see above
 
-4) on localhost, install additional components according to https://osm.etsi.org/wikipub/index.php/Developer_HowTo
+3) on localhost, install additional components according to https://osm.etsi.org/wikipub/index.php/Developer_HowTo
 
 on MacOSX
 
@@ -198,7 +197,7 @@ sudo pip3 install pip==9.0.3
 sudo pip3 install ptvsd==3.0.0
 ```
 
-4a) prepare NBI development
+4) prepare NBI development
 
 - create a virtualenv to run Python3.6
 
@@ -226,7 +225,7 @@ sudo pip3 install -e common
 - change references to OSM services in /etc/hosts
 
 ```
-10.20.0.108 mongo ro kafka nbi ro-db
+10.20.0.155 mongo ro kafka nbi ro-db
 ```
 
 - modify NBI/osm_nbi/nbi.cfg
@@ -260,9 +259,9 @@ sudo pip3 install -e pyangbind
 - copy yang models
 
 ```
-scp ubuntu@10.20.0.108:/home/ubuntu/NBI/osm_nbi/* NBI/osm_nbi
+scp ubuntu@10.20.0.155:/home/ubuntu/NBI/osm_nbi/* NBI/osm_nbi
 mkdir -p IM/models/yang
-scp ubuntu@10.20.0.108:/home/ubuntu/IM/models/yang/* IM/models/yang
+scp ubuntu@10.20.0.155:/home/ubuntu/IM/models/yang/* IM/models/yang
 ```
 
 - configure VSCode to run NBI
@@ -278,7 +277,7 @@ VS Code
 }
 ```
 
-4b) prepare LW-UI development
+5) prepare LW-UI development
 
 - create a virtualenv to run Python2.7
 
@@ -310,7 +309,7 @@ debug with Django
 },
 ```
 
-5) with OSM and Keycloak running, launch NBI + LW-UI from your IDE (e.g. VSCode) and debug 
+6) with OSM and Keycloak running, launch NBI + LW-UI from your IDE (e.g. VSCode) and debug 
 
 
 NOTE: to scale DOWN/UP containers in OSM
