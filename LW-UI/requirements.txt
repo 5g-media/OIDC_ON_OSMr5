@@ -1,5 +1,5 @@
 decorator==4.0.10
-Django==1.10.1
+Django==1.11.28
 django-model-utils==2.6
 functools32==3.2.3.post2
 jsonfield==1.0.3
