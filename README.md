@@ -1,4 +1,4 @@
-### HOWTO add OpenID Connect support to OSM r5 using Keycloak IDP ### 
+### OpenID Connect support in OSM r5 using Keycloak IDP ### 
 
 The instructions allow to replicate the tests on a local VM with fixed IP, e.g. on a VirtualBox 
 
@@ -340,5 +340,6 @@ docker service logs osm_light-ui
 docker service logs osm_nbi
 ```
 
-
+### Acknowledgements
+This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 761699. The dissemination of results herein reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.
 
